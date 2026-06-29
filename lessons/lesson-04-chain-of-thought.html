@@ -41,7 +41,8 @@
   .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
     backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
   .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
-  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px;color:var(--text);text-decoration:none}
+  a.brand:hover{opacity:.85;text-decoration:none}
   .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
     background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
     color:#06121a;font-size:13px}
@@ -128,7 +129,7 @@
 </head>
 <body>
 <div class="topbar"><div class="wrap row">
-  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <a class="brand" href="../index.html"><span class="logo">☁</span> Prompting Lab</a>
   <nav class="navlinks">
     <a href="../index.html">Home</a>
     <a href="#cot">Zero-shot CoT</a>
@@ -204,7 +205,7 @@ QUESTION = (
       count → your usage is 1,600 GB → that fits <strong>Plus</strong> (2,048 GB) → 6 × $10 =
       <strong>$60</strong>. The trap: add the 600 GB and you get 2,200 GB → "need Pro" → $150. Wrong.</p>
     <p>Now ask for the answer directly — no room to reason (we also switch off the model's built-in
-      thinking, explained in §6, so we can see the <em>classic</em> behavior):</p>
+      thinking, explained in section 6, so we can see the <em>classic</em> behavior):</p>
     <figure class="code">
       <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">answer_direct()</span>
         <button class="copy">Copy</button></figcaption>
@@ -589,8 +590,15 @@ if __name__ == "__main__":
   }
 
   function hlBash(code){
-    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
-                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+    const re=/(#.*)|("[^"]*"|'[^']*')/g;
+    let out="",last=0,m;
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[1]!==undefined) out+='<span class="t-com">'+esc(m[1])+'</span>';
+      else out+='<span class="t-str">'+esc(m[2])+'</span>';
+    }
+    out+=esc(code.slice(last));
+    return out;
   }
 
   document.querySelectorAll("figure.code").forEach(fig=>{

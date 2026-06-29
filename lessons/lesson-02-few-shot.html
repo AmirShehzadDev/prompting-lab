@@ -41,7 +41,8 @@
   .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
     backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
   .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
-  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px;color:var(--text);text-decoration:none}
+  a.brand:hover{opacity:.85;text-decoration:none}
   .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
     background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
     color:#06121a;font-size:13px}
@@ -126,7 +127,7 @@
 </head>
 <body>
 <div class="topbar"><div class="wrap row">
-  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <a class="brand" href="../index.html"><span class="logo">☁</span> Prompting Lab</a>
   <nav class="navlinks">
     <a href="../index.html">Home</a>
     <a href="#why">Why few-shot</a>
@@ -391,7 +392,7 @@ few-shot  accuracy: 100%</div>
         <tr><td><strong>Order / recency bias</strong></td><td>The label of the <em>last</em> example can tug ambiguous inputs toward it.</td><td>Shuffle example order; don't end on the rarest class.</td></tr>
         <tr><td><strong>Format drift</strong></td><td>Occasional stray punctuation, casing, or an explanation despite the examples.</td><td><code>temperature=0</code>, a firm "ONLY the label" instruction, and always <code>normalize()</code>.</td></tr>
         <tr><td><strong>Out-of-distribution input</strong></td><td>A message unlike any example gets a confident but wrong label.</td><td>Keep an explicit <code>other</code> class; later, let it abstain / escalate (Lessons 6–7).</td></tr>
-        <tr><td><strong>Too many examples</strong></td><td>Past ~5–10, accuracy plateaus while cost and latency keep climbing.</td><td>Use the fewest examples that hit your accuracy target; measure (§4).</td></tr>
+        <tr><td><strong>Too many examples</strong></td><td>Past ~5–10, accuracy plateaus while cost and latency keep climbing.</td><td>Use the fewest examples that hit your accuracy target; measure (section 4).</td></tr>
       </tbody>
     </table>
     <div class="callout fail"><div class="ct">✗ Subtle trap: label leakage</div>
@@ -418,7 +419,7 @@ few-shot  accuracy: 100%</div>
       grows every time you add an example. Two levers keep it down:</p>
     <ul>
       <li><strong>Use the cheapest model that passes your eval.</strong> Routing doesn't need
-        <code>flash</code>, let alone <code>pro</code>. We measured (§4) and <code>flash-lite</code> hit 100%.</li>
+        <code>flash</code>, let alone <code>pro</code>. We measured (section 4) and <code>flash-lite</code> hit 100%.</li>
       <li><strong>Cache the static prefix.</strong> The examples never change between calls — the perfect
         case for <em>context caching</em>.</li>
     </ul>
@@ -605,8 +606,15 @@ bug <- Sync keeps failing with error code 0x83.</div>
   }
 
   function hlBash(code){
-    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
-                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+    const re=/(#.*)|("[^"]*"|'[^']*')/g;
+    let out="",last=0,m;
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[1]!==undefined) out+='<span class="t-com">'+esc(m[1])+'</span>';
+      else out+='<span class="t-str">'+esc(m[2])+'</span>';
+    }
+    out+=esc(code.slice(last));
+    return out;
   }
 
   document.querySelectorAll("figure.code").forEach(fig=>{

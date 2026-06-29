@@ -7,6 +7,27 @@ implemented two ways — **raw Google Gemini SDK** and **LangChain / LangGraph**
 anchored to one project: an AI support assistant for *Nimbus*, a fictional
 cloud file-sync SaaS.
 
+
+## Lessons
+
+Each lesson covers when to use a technique, why it works, its failure modes, and the cost/latency/reliability
+trade-offs — then implements it **twice**: once with the raw Gemini SDK, once with LangChain.
+
+| # | Lesson | Technique | Code (raw · LangChain) |
+|--:|--------|-----------|------------------------|
+| 1 | Foundations & your first prompt | Zero-shot + a reusable client wrapper (retries, timeout, cost, graceful failure) | [`nimbus/llm.py`](code/nimbus/llm.py) · [`zero_shot.py`](code/zero_shot.py) · [`zero_shot_lc.py`](code/zero_shot_lc.py) |
+| 2 | Few-shot prompting | Few-shot in-context learning → an intent **router** | [`classify.py`](code/classify.py) · [`classify_lc.py`](code/classify_lc.py) |
+| 3 | Role & system prompting | System prompt: persona, scope, guardrails, refusals | [`system_prompt.py`](code/system_prompt.py) · [`agent.py`](code/agent.py) · [`agent_lc.py`](code/agent_lc.py) |
+| 4 | Chain-of-thought & variants | Zero-/few-shot CoT, self-consistency, native "thinking" | [`reasoning.py`](code/reasoning.py) · [`self_consistency.py`](code/self_consistency.py) · [`cot_lc.py`](code/cot_lc.py) |
+| 5 | Prompt chaining & self-refine | Pipeline: classify → route → draft → critique → refine (LCEL) | [`pipeline.py`](code/pipeline.py) · [`pipeline_lc.py`](code/pipeline_lc.py) |
+| 6 | Structured output & tool use | JSON-schema output (Pydantic) + function calling | [`ticket.py`](code/ticket.py) · [`tools.py`](code/tools.py) · [`structured_lc.py`](code/structured_lc.py) |
+| 7 | ReAct-style agents | Reason → act → observe loop with step + budget guards | [`agent_react.py`](code/agent_react.py) · [`agent_react_lc.py`](code/agent_react_lc.py) |
+| 8 | Retrieval-augmented prompting (RAG) | Embeddings, retrieval, grounded answers + citations | [`rag.py`](code/rag.py) · [`rag_lc.py`](code/rag_lc.py) |
+| 9 | Evaluation & optimization | Accuracy, LLM-as-judge, groundedness, prompt A/B | [`evaluate.py`](code/evaluate.py) · [`judge_lc.py`](code/judge_lc.py) |
+| 10 | Capstone + outdated tricks | Full agent assembly + honest myth-busting | [`capstone.py`](code/capstone.py) |
+
+The rendered lessons live in [`lessons/`](lessons/) (open them via the live site above, or locally through `index.html`).
+
 ## Read the lessons
 
 Open **`index.html`** in a browser (the lessons are self-contained HTML — no
@@ -105,32 +126,10 @@ python judge_lc.py          # LLM-as-judge via LangChain with_structured_output
 python capstone.py          # the full agent: ticket -> route -> (agent tools | RAG) -> reply
 ```
 
-## Deploy (GitHub Pages)
-
-This is a static site (plain HTML/CSS/JS), so GitHub Pages serves it directly — no build step.
-
-```bash
-git init -b main
-git add .
-git commit -m "Prompting Lab: a build-it-twice prompting course"
-
-# Option A — GitHub CLI (after `gh auth login`):
-gh repo create prompting-lab --public --source=. --remote=origin --push
-
-# Option B — manual: create an empty repo on github.com, then:
-git remote add origin https://github.com/<YOUR-USERNAME>/prompting-lab.git
-git push -u origin main
-```
-
-Then enable Pages: **repo → Settings → Pages → Source: "Deploy from a branch" → Branch: `main` / `(root)` → Save.**
-The site goes live at **https://&lt;YOUR-USERNAME&gt;.github.io/prompting-lab/** within a minute or two.
-(The included `.nojekyll` file makes Pages serve every file as-is.)
-
 ## Author
 
 **Amir Shehzad** — I built this course to learn production LLM engineering hands-on, implementing each
-technique twice (raw SDK + framework). Every lesson and code sample was reviewed, run, and verified
-by me.
+technique twice (raw SDK + framework).
 
 ## License
 
@@ -150,7 +149,3 @@ code/                      # all runnable Python
 requirements.txt
 LICENSE
 ```
-
-> Default model is `gemini-2.5-flash` (verified pricing; deprecation shutdown
-> 2026-10-16). It lives in one constant — `DEFAULT_MODEL` in `nimbus/llm.py` —
-> so swapping models is a one-line change.

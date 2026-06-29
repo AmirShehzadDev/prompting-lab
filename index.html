@@ -45,7 +45,8 @@
   .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
     backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
   .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
-  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px;color:var(--text);text-decoration:none}
+  a.brand:hover{opacity:.85;text-decoration:none}
   .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
     background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
     color:#06121a;font-size:13px}
@@ -180,7 +181,7 @@
 </head>
 <body>
 <div class="topbar"><div class="wrap row">
-  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <a class="brand" href="index.html"><span class="logo">☁</span> Prompting Lab</a>
   <nav class="navlinks">
     <a href="#project">Project</a>
     <a href="#how">How it works</a>
@@ -429,12 +430,10 @@ $env:GEMINI_API_KEY = "your-key-here"
   </section>
 
   <section id="about">
-    <h2>About this course</h2>
-    <p class="sub">Who made it, and how.</p>
+    <h2>About this course</h2>    
     <p>I'm <strong>Amir Shehzad</strong>. I built Prompting Lab to learn the techniques behind production
       LLM apps the way I learn best — by implementing each one <em>twice</em>: once from scratch against
-      the raw SDK, once with a framework, so I understood exactly what the abstractions do. I ran and verified every lesson and code sample myself as I built it.</p>
-    <p>If you're hiring or just want to talk LLM engineering, I'd love to connect.</p>
+      the raw SDK, once with a framework, so I understood exactly what the abstractions do.</p>    
   </section>
 
   <footer>
@@ -475,8 +474,15 @@ $env:GEMINI_API_KEY = "your-key-here"
   }
 
   function hlBash(code){
-    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
-                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+    const re=/(#.*)|("[^"]*"|'[^']*')/g;
+    let out="",last=0,m;
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[1]!==undefined) out+='<span class="t-com">'+esc(m[1])+'</span>';
+      else out+='<span class="t-str">'+esc(m[2])+'</span>';
+    }
+    out+=esc(code.slice(last));
+    return out;
   }
 
   document.querySelectorAll("figure.code").forEach(fig=>{
