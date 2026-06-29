@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 10 — Capstone + outdated tricks</title>
+<script>/* set theme before paint to avoid a flash */(function(){try{if(localStorage.getItem('plab-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+  :root{
+    --bg:#0c0f14; --bg2:#11161d; --panel:#151b24; --panel2:#1b2330;
+    --border:#232c39; --border2:#2e3a4a;
+    --text:#e7eef6; --muted:#93a1b1; --faint:#6b7888;
+    --accent:#2dd4bf; --accent-d:#14b8a6; --amber:#f5b056; --violet:#a78bfa;
+    --red:#f87171; --green:#4ade80; --blue:#79c0ff;
+    --c-kw:#f97583; --c-str:#9ecbff; --c-com:#6b7888; --c-num:#f8c572;
+    --c-fn:#d2a8ff; --c-call:#79c0ff; --c-blt:#56d4bd; --c-dec:#f5b056;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    --code-bg:#0a0d12; --code-fg:#dce6f0; --code-inline-fg:#cfe7ff;
+    --topbar-bg:rgba(12,15,20,.82);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9fc; --bg2:#eef2f6; --panel:#ffffff; --panel2:#eef3f8;
+    --border:#dde4ec; --border2:#c6d0dd;
+    --text:#16202e; --muted:#52616f; --faint:#8492a2;
+    --accent:#0d9488; --accent-d:#0f766e; --amber:#b45309; --violet:#7c3aed;
+    --red:#dc2626; --green:#15803d; --blue:#1d4ed8;
+    --c-kw:#cf222e; --c-str:#0a3069; --c-com:#6e7781; --c-num:#0550ae;
+    --c-fn:#8250df; --c-call:#0969da; --c-blt:#1a7f37; --c-dec:#9a6700;
+    --code-bg:#f6f8fa; --code-fg:#1f2630; --code-inline-fg:#0550ae;
+    --topbar-bg:rgba(247,249,252,.85);
+  }
+  :root[data-theme="light"] body{ -webkit-font-smoothing:auto; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
+    color:#06121a;font-size:13px}
+  .navlinks{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .navlinks a{color:var(--muted)} .navlinks a:hover{color:var(--text);text-decoration:none}
+  .themebtn{margin-left:14px;background:var(--panel2);border:1px solid var(--border2);
+    color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px;
+    line-height:1;display:grid;place-items:center;flex:0 0 auto}
+  .themebtn:hover{border-color:var(--accent-d)}
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  section h2{font-size:25px;margin:0 0 6px;letter-spacing:-.3px}
+  section .sub{color:var(--muted);margin:0 0 20px}
+  h3{font-size:19px;margin:26px 0 8px} h4{font-size:16px;margin:18px 0 6px}
+  p{margin:0 0 14px} ul,ol{margin:0 0 16px;padding-left:22px} li{margin:6px 0}
+  strong{color:var(--text)} :root:not([data-theme]) strong, :root[data-theme="dark"] strong{color:#fff}
+  .callout{border:1px solid var(--border2);border-left-width:3px;border-radius:10px;
+    padding:13px 16px;margin:18px 0;background:var(--bg2);font-size:14.5px}
+  .callout .ct{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
+    margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .callout p:last-child{margin-bottom:0}
+  .callout.info{border-left-color:var(--blue)} .callout.info .ct{color:var(--blue)}
+  .callout.key{border-left-color:var(--accent)} .callout.key .ct{color:var(--accent)}
+  .callout.warn{border-left-color:var(--amber)} .callout.warn .ct{color:var(--amber)}
+  .callout.fail{border-left-color:var(--red)} .callout.fail .ct{color:var(--red)}
+  .callout.cost{border-left-color:var(--violet)} .callout.cost .ct{color:var(--violet)}
+  figure.code{margin:18px 0;border:1px solid var(--border2);border-radius:12px;
+    overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px}
+  .chip{font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:6px;
+    text-transform:uppercase}
+  .chip.raw{background:rgba(245,176,86,.15);color:var(--amber);border:1px solid rgba(245,176,86,.3)}
+  .chip.lc{background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3)}
+  .chip.run{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .chip.prompt{background:rgba(121,192,255,.13);color:var(--blue);border:1px solid rgba(121,192,255,.3)}
+  .fname{color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  figure.code .copy{margin-left:auto;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border2);border-radius:7px;padding:4px 10px;font-size:12px;
+    cursor:pointer;font-family:var(--sans)}
+  figure.code .copy:hover{color:var(--text);border-color:var(--accent-d)}
+  figure.code pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6}
+  figure.code code{font-family:var(--mono);white-space:pre}
+  :not(pre)>code{font-family:var(--mono);font-size:.9em;background:var(--panel2);
+    border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--code-inline-fg)}
+  .t-kw{color:var(--c-kw)} .t-str{color:var(--c-str)} .t-com{color:var(--c-com);font-style:italic}
+  .t-num{color:var(--c-num)} .t-fn{color:var(--c-fn)} .t-call{color:var(--c-call)}
+  .t-blt{color:var(--c-blt)} .t-dec{color:var(--c-dec)}
+  .response{border:1px solid var(--border2);border-radius:12px;margin:18px 0;overflow:hidden}
+  .response .rhead{background:var(--panel2);padding:8px 14px;font-size:12.5px;font-weight:600;
+    color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .response .rhead::before{content:"▍";color:var(--accent)}
+  .response.bad .rhead::before{color:var(--red)} .response.good .rhead::before{color:var(--green)}
+  .response .rbody{padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;
+    white-space:pre-wrap;color:var(--code-fg);background:var(--code-bg)}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);color:var(--text);font-weight:600}
+  td{color:var(--muted)} td strong{color:var(--text)}
+  .tryit{border:1px dashed var(--border2);border-radius:12px;padding:18px 20px;
+    background:linear-gradient(180deg,rgba(45,212,191,.04),transparent);margin:22px 0}
+  .tryit h3{margin-top:0;color:var(--accent)}
+  .pager{display:flex;justify-content:space-between;gap:14px;padding:30px 0 60px}
+  .pager a{flex:1;border:1px solid var(--border);border-radius:12px;padding:14px 18px;background:var(--panel)}
+  .pager a:hover{border-color:var(--accent-d);text-decoration:none}
+  .pager .dir{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .pager .ttl{color:var(--text);font-weight:600;margin-top:2px}
+  .pager a.next{text-align:right} .pager a.disabled{opacity:.4;pointer-events:none}
+  footer{padding:30px 0;color:var(--faint);font-size:13px;text-align:center}
+  .kbd{font-family:var(--mono);font-size:.85em;background:var(--panel2);border:1px solid var(--border2);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  hr.soft{border:none;border-top:1px solid var(--border);margin:26px 0}
+  .lhead{padding:46px 0 26px;border-bottom:1px solid var(--border)}
+  .crumb{font-size:13px;color:var(--faint);margin-bottom:14px} .crumb a{color:var(--muted)}
+  .lhead h1{font-size:36px;line-height:1.12;margin:0 0 12px;letter-spacing:-.4px}
+  .lhead p.lead{font-size:18px;color:var(--muted);max-width:680px;margin:0 0 18px}
+  .meta-badges{display:flex;gap:9px;flex-wrap:wrap}
+  .mb{font-size:12.5px;border:1px solid var(--border2);color:var(--muted);
+    padding:4px 10px;border-radius:999px;background:var(--bg2)} .mb b{color:var(--accent)}
+  .toc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:22px 0}
+  .toc ol{margin:6px 0 0;padding-left:20px} .toc li{margin:3px 0;color:var(--muted)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:20px 0;font-size:13px}
+  .flow .node{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;
+    padding:8px 12px;font-weight:600}
+  .flow .node small{display:block;color:var(--faint);font-weight:400;font-size:11px}
+  .flow .arr{color:var(--accent);font-weight:700}
+  @media(max-width:600px){.lhead h1{font-size:28px}.navlinks{display:none}.themebtn{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap row">
+  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <nav class="navlinks">
+    <a href="../index.html">Home</a>
+    <a href="#capstone">Capstone</a>
+    <a href="#recap">Recap</a>
+    <a href="#outdated">Outdated tricks</a>
+    <a href="#next">What's next</a>
+  </nav>
+  <button class="themebtn" id="themeToggle" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">🌙</button>
+</div></div>
+
+<div class="wrap">
+  <header class="lhead">
+    <div class="crumb"><a href="../index.html">Prompting Lab</a> &nbsp;/&nbsp; Lesson 10</div>
+    <h1>Capstone + outdated tricks</h1>
+    <p class="lead">Nine lessons, nine techniques, one project. Now we assemble the full Nimbus Support
+      Agent end to end &mdash; every technique in its place &mdash; then close the course with an honest
+      list of the prompting "tricks" you can safely stop using on modern models.</p>
+    <div class="meta-badges">
+      <span class="mb">⏱ <b>~25 min</b></span>
+      <span class="mb">🎓 level: <b>all</b></span>
+      <span class="mb">🧠 <b>assembly + myth-busting</b></span>
+      <span class="mb">🧩 builds: <b>the complete agent</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="toc">
+      <strong>In this lesson</strong>
+      <ol>
+        <li><a href="#capstone">The capstone: the full pipeline</a></li>
+        <li><a href="#wire">Wiring it together</a></li>
+        <li><a href="#run">A full run, end to end</a></li>
+        <li><a href="#recap">Course recap: technique &rarr; capability</a></li>
+        <li><a href="#outdated">Outdated tricks (and what to do instead)</a></li>
+        <li><a href="#durable">Durable vs. outdated: how to tell</a></li>
+        <li><a href="#next">Where to go next</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 1 CAPSTONE -->
+  <section id="capstone">
+    <h2>1 · The capstone: the full pipeline</h2>
+    <p class="sub">Every technique was a piece of one system. Here's how they snap together into the agent
+      the course promised in Lesson 0.</p>
+    <div class="flow">
+      <span class="node">Message<small>customer</small></span><span class="arr">&rarr;</span>
+      <span class="node">Ticket<small>L6 structured intake</small></span><span class="arr">&rarr;</span>
+      <span class="node">Route<small>L2 intent</small></span><span class="arr">&rarr;</span>
+      <span class="node">Account? &rarr; Agent<small>L7 tools</small></span><span class="arr">/</span>
+      <span class="node">Else &rarr; RAG<small>L8 help center</small></span><span class="arr">&rarr;</span>
+      <span class="node">Reply<small>L3 persona</small></span>
+    </div>
+    <p>Each incoming message becomes a <strong>structured ticket</strong> (Lesson 6), whose
+      <code>intent</code> (Lesson 2) decides the path: account-specific questions go to the
+      <strong>tool-using agent</strong> (Lesson 7) for real data; everything else is answered from the
+      <strong>help center via RAG</strong> (Lesson 8). The whole thing speaks in the
+      <strong>Nimbus persona with guardrails</strong> (Lesson 3), and we hold its quality to the
+      <strong>eval suite</strong> (Lesson 9). Zero-shot (Lesson 1) and chaining (Lesson 5) are the
+      connective tissue.</p>
+  </section>
+
+
+  <!-- 2 WIRE -->
+  <section id="wire">
+    <h2>2 · Wiring it together</h2>
+    <p class="sub">The orchestration is small &mdash; because the hard work lives in the modules we already
+      built and tested. This is the payoff of one coherent project.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Capstone</span><span class="fname">capstone.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from ticket import build_ticket          # Lesson 6: structured intake
+from agent_react import run_agent        # Lesson 7: tool-using agent
+from rag import answer as rag_answer      # Lesson 8: grounded help-center answers
+
+def handle(message: str, email: str | None = None) -> dict:
+    """The full Nimbus Support Agent, one message in, ticket + reply out."""
+    ticket = build_ticket(message)                       # L6: intent, severity, needs_human...
+
+    if ticket.intent in ("billing", "cancellation") and email:
+        # Account-specific -> the tool-using agent looks up real data (L7).
+        reply = run_agent(f"Customer {email} says: {message}")["answer"]
+    else:
+        # Knowledge question -> ground the answer in the help center (L8).
+        reply = rag_answer(message)
+
+    return {"ticket": ticket, "reply": reply}
+
+if __name__ == "__main__":
+    out = handle("I'm alice@example.com and I think I was charged twice!", email="alice@example.com")
+    t = out["ticket"]
+    print(f"[{t.intent}/{t.severity}] needs_human={t.needs_human}")
+    print(out["reply"])</script>
+    </figure>
+    <p>Notice every routing decision is something you learned to build: <code>build_ticket</code> is
+      structured output, the <code>intent</code> check is the router, <code>run_agent</code> is the ReAct
+      loop, <code>rag_answer</code> is retrieval &mdash; all wearing the Lesson 3 persona. The persona and
+      guardrails ride along because each underlying call uses <code>NIMBUS_SYSTEM</code>.</p>
+  </section>
+
+  <!-- 3 RUN -->
+  <section id="run">
+    <h2>3 · A full run, end to end</h2>
+    <p class="sub">Two messages, two paths through the same agent.</p>
+    <div class="response good"><div class="rhead">billing + email &rarr; agent path (tools)</div>
+      <div class="rbody">[billing/high] needs_human=True
+Hi Alice - I checked your account and I do see two $10 charges on 2026-06-01
+(the second flagged as a duplicate). I can't reverse it myself, but I've flagged
+it for a human billing agent to refund the duplicate. You're on the Plus plan,
+renewing 2026-07-15. Anything else I can help with?</div>
+    </div>
+    <div class="response good"><div class="rhead">how-to &rarr; RAG path (help center)</div>
+      <div class="rbody">handle("How do I share a folder with someone who has no account?")
+
+[how_to/low] needs_human=False
+You can share with people who don't have a Nimbus account using a link:
+right-click the folder, choose "Share", then "Create link", set it to "Can view"
+or "Can edit", and send the link - they can open it in a browser without signing
+up. [sharing#0]</div>
+    </div>
+    <p>One agent, structured intake, the right tool for each request, grounded and on-brand throughout. That
+      is a production-shaped support agent &mdash; built from techniques you now understand at the API level
+      <em>and</em> the framework level.</p>
+  </section>
+
+  <!-- 4 RECAP -->
+  <section id="recap">
+    <h2>4 · Course recap: technique &rarr; capability</h2>
+    <p class="sub">Every lesson added one capability to the same agent.</p>
+    <table>
+      <thead><tr><th>#</th><th>Technique</th><th>What it gave Nimbus</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Zero-shot + the <code>llm.py</code> wrapper</td><td>A baseline, and retries/cost/graceful failure</td></tr>
+        <tr><td>2</td><td>Few-shot</td><td>A reliable intent <strong>router</strong></td></tr>
+        <tr><td>3</td><td>Role / system prompting</td><td>Persona, scope, guardrails, refusals</td></tr>
+        <tr><td>4</td><td>Chain-of-thought + self-consistency</td><td>Multi-step <strong>reasoning</strong> (+ native thinking)</td></tr>
+        <tr><td>5</td><td>Prompt chaining + self-refine</td><td>A multi-stage <strong>pipeline</strong></td></tr>
+        <tr><td>6</td><td>Structured output + tool use</td><td>Validated <strong>tickets</strong> + account <strong>tools</strong></td></tr>
+        <tr><td>7</td><td>ReAct agents</td><td>An <strong>autonomous</strong> tool-using loop</td></tr>
+        <tr><td>8</td><td>RAG</td><td>Grounded answers with <strong>citations</strong></td></tr>
+        <tr><td>9</td><td>Evaluation + optimization</td><td>Proof it works, and a way to improve it</td></tr>
+        <tr><td>10</td><td>Assembly</td><td>The <strong>complete agent</strong></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5 OUTDATED -->
+  <section id="outdated">
+    <h2>5 · Outdated tricks (and what to do instead)</h2>
+    <p class="sub">As promised throughout: a lot of prompting folklore no longer earns its keep on modern
+      instruction-tuned models. Stop spending tokens on these.</p>
+    <table>
+      <thead><tr><th>Trick</th><th>Verdict</th><th>Do instead</th></tr></thead>
+      <tbody>
+        <tr><td>"You are a world-renowned expert in&hellip;"</td><td>🟠 Mostly noise (role <em>inflation</em>)</td><td>A precise role + concrete, testable rules (L3).</td></tr>
+        <tr><td>"I'll tip you $200" / "my job depends on this"</td><td>🔴 No reliable effect</td><td>State the task and constraints clearly.</td></tr>
+        <tr><td>"Take a deep breath"</td><td>🟠 Folklore reasoning trigger</td><td>Ask for steps when needed (L4), or use native thinking.</td></tr>
+        <tr><td>ALL-CAPS / repeating an instruction 5&times;</td><td>🟠 Adds noise, not reliability</td><td>One clear instruction; enforce shape with a schema (L6).</td></tr>
+        <tr><td>"Do not hallucinate."</td><td>🔴 Not a switch</td><td>Ground facts with RAG (L8); constrain with schema (L6).</td></tr>
+        <tr><td>Elaborate persona / jailbreak framing</td><td>🔴 Fragile &amp; risky</td><td>A real system prompt + <em>code-level</em> guardrails (L3, L6).</td></tr>
+        <tr><td>Chain-of-thought on <em>every</em> task</td><td>🟠 Wastes tokens on trivial ones</td><td>Reserve CoT for genuinely multi-step problems (L4).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><div class="ct">&#9888; Why these faded</div>
+      <p>Many were real on early models (GPT-3 era) that needed coaxing. Today's instruction-tuned models
+      follow clear directions directly, so incantations mostly add tokens, latency, and noise. The fix for
+      "the model won't behave" is almost never a magic phrase &mdash; it's a clearer instruction, an
+      example, a schema, retrieval, or a code guardrail.</p>
+    </div>
+  </section>
+
+  <!-- 6 DURABLE -->
+  <section id="durable">
+    <h2>6 · Durable vs. outdated: how to tell</h2>
+    <p class="sub">You don't have to guess which advice is real. You have a tool for that now.</p>
+    <p>The difference between a durable technique and a dead trick is simple: <strong>does it move your
+      eval?</strong> (Lesson 9.) Few-shot, system prompts, CoT-for-hard-tasks, structured output, tools,
+      and RAG all produce measurable lifts on the right tasks. Tips you can't measure a gain from are
+      superstition &mdash; pleasant rituals that survive because nobody A/B tested them.</p>
+    <div class="callout key"><div class="ct">&#10022; The one meta-skill</div>
+      <p>Models change fast. What helped last year may be noise today, and today's best practice may age
+      out. The durable skill isn't memorizing techniques &mdash; it's the loop: <strong>form a hypothesis,
+      build a small eval, measure, keep what wins.</strong> That outlives any single model or framework.</p>
+    </div>
+  </section>
+
+  <!-- 7 NEXT -->
+  <section id="next">
+    <h2>7 · Where to go next</h2>
+    <p class="sub">This course covered the prompting techniques. Shipping to production adds a few more
+      concerns worth a look:</p>
+    <ul>
+      <li><strong>Prompt / context caching</strong> &mdash; reuse static prefixes (system prompts, few-shot
+        examples, RAG context) to cut cost and latency at scale (touched on in L2/L3).</li>
+      <li><strong>Observability &amp; tracing</strong> &mdash; log every call, tool, and token; inspect
+        failures. LangSmith or OpenTelemetry-based tracing.</li>
+      <li><strong>Guardrails &amp; safety</strong> &mdash; input/output moderation, prompt-injection
+        defense, and human approval for irreversible actions (L3 &sect;4, L6 &sect;6).</li>
+      <li><strong>Streaming</strong> &mdash; stream tokens to the UI so long answers feel fast.</li>
+      <li><strong>Multi-agent systems</strong> &mdash; specialized agents that hand off (a natural extension
+        of L7 on LangGraph).</li>
+      <li><strong>Prompting vs. fine-tuning</strong> &mdash; when a task is high-volume and stable, a
+        fine-tuned small model can beat a prompted large one on cost. Prompt first; fine-tune when the eval
+        and the economics say so.</li>
+      <li><strong>Evals in CI</strong> &mdash; run Lesson 9's suite on every prompt change, like unit tests.</li>
+    </ul>
+    <div class="callout key"><div class="ct">&#10022; You finished the course</div>
+      <p>You built a real, production-shaped support agent &mdash; twice over, raw SDK and LangChain &mdash;
+      and you can now reason about <em>when</em> each technique applies, what it costs, how it fails, and how
+      to prove it works. That's the whole job. Go build something and measure it.</p>
+    </div>
+    <p style="color:var(--muted)">Thanks for building the Nimbus Support Agent with me. Re-run any lesson's
+      code, tweak the prompts, and watch the eval &mdash; that's where the real learning compounds.</p>
+  </section>
+
+  <nav class="pager">
+    <a class="prev" href="lesson-09-evaluation.html">
+      <div class="dir">&larr; Previous</div><div class="ttl">Lesson 9 &middot; Evaluation &amp; optimization</div></a>
+    <a class="next" href="../index.html">
+      <div class="dir">Course complete &#127881;</div><div class="ttl">Back to the course home</div></a>
+  </nav>
+
+  <footer>
+    Prompting Lab &middot; Lesson 10 of 10 &middot; the complete Nimbus Support Agent.<br>
+    Code targets Python + the Google Gemini SDK (<code>google-genai</code>), contrasted with LangChain / LangGraph.
+  </footer>
+</div>
+
+<script>
+/* ============ Shared scripts (identical across all lessons) ============ */
+(function(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  function hlPython(code){
+    const KW=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+    const BLT=new Set("print len range dict list set tuple str int float bool open enumerate zip map filter sum min max sorted reversed type isinstance issubclass super getattr setattr hasattr abs round repr input format vars dir id".split(" "));
+    const re=/([rbfuRBFU]{0,2})("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*)|([rbfuRBFU]{0,2})("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(@[A-Za-z_][\w.]*)|(\b\d[\w.]*\b)|([A-Za-z_]\w*)/g;
+    let out="",last=0,m,prev="";
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[2]!==undefined){ out+='<span class="t-str">'+esc((m[1]||"")+m[2])+'</span>'; prev=""; }
+      else if(m[3]!==undefined){ out+='<span class="t-com">'+esc(m[3])+'</span>'; prev=""; }
+      else if(m[5]!==undefined){ out+='<span class="t-str">'+esc((m[4]||"")+m[5])+'</span>'; prev=""; }
+      else if(m[6]!==undefined){ out+='<span class="t-dec">'+esc(m[6])+'</span>'; prev=""; }
+      else if(m[7]!==undefined){ out+='<span class="t-num">'+esc(m[7])+'</span>'; prev=""; }
+      else if(m[8]!==undefined){
+        const w=m[8], nxt=code[re.lastIndex];
+        if(KW.has(w)) out+='<span class="t-kw">'+esc(w)+'</span>';
+        else if(prev==="def"||prev==="class") out+='<span class="t-fn">'+esc(w)+'</span>';
+        else if(BLT.has(w)) out+='<span class="t-blt">'+esc(w)+'</span>';
+        else if(nxt==="(") out+='<span class="t-call">'+esc(w)+'</span>';
+        else out+=esc(w);
+        prev=w;
+      }
+    }
+    out+=esc(code.slice(last));
+    return out;
+  }
+  function hlBash(code){
+    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+  }
+  document.querySelectorAll("figure.code").forEach(fig=>{
+    const codeEl=fig.querySelector("code.render");
+    const src=fig.querySelector("script.src");
+    if(codeEl&&src){
+      let txt=src.textContent.replace(/^\n/,"").replace(/\s+$/,"");
+      const lang=codeEl.getAttribute("data-lang")||"python";
+      codeEl.innerHTML = lang==="bash" ? hlBash(txt) : hlPython(txt);
+      codeEl.dataset.raw=txt;
+    }
+    const btn=fig.querySelector(".copy");
+    if(btn){btn.addEventListener("click",()=>{
+      const raw=fig.querySelector("code.render")?.dataset.raw||"";
+      navigator.clipboard.writeText(raw).then(()=>{
+        const o=btn.textContent;btn.textContent="Copied ✓";
+        setTimeout(()=>btn.textContent=o,1200);
+      });
+    });}
+  });
+  var tb=document.getElementById("themeToggle");
+  function syncIcon(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(tb) tb.textContent = light ? "☀️" : "🌙";
+  }
+  syncIcon();
+  if(tb) tb.addEventListener("click",function(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(light) document.documentElement.removeAttribute("data-theme");
+    else      document.documentElement.setAttribute("data-theme","light");
+    try{ localStorage.setItem("plab-theme", light ? "dark" : "light"); }catch(e){}
+    syncIcon();
+  });
+})();
+</script>
+</body>
+</html>

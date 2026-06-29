@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompting Lab — Nimbus Support Agent</title>
+<script>/* set theme before paint to avoid a flash */(function(){try{if(localStorage.getItem('plab-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+  /* ============ Shared design system (identical across all lessons) ============ */
+  :root{
+    --bg:#0c0f14; --bg2:#11161d; --panel:#151b24; --panel2:#1b2330;
+    --border:#232c39; --border2:#2e3a4a;
+    --text:#e7eef6; --muted:#93a1b1; --faint:#6b7888;
+    --accent:#2dd4bf; --accent-d:#14b8a6; --amber:#f5b056; --violet:#a78bfa;
+    --red:#f87171; --green:#4ade80; --blue:#79c0ff;
+    /* code tokens */
+    --c-kw:#f97583; --c-str:#9ecbff; --c-com:#6b7888; --c-num:#f8c572;
+    --c-fn:#d2a8ff; --c-call:#79c0ff; --c-blt:#56d4bd; --c-dec:#f5b056;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    --code-bg:#0a0d12; --code-fg:#dce6f0; --code-inline-fg:#cfe7ff;
+    --topbar-bg:rgba(12,15,20,.82);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9fc; --bg2:#eef2f6; --panel:#ffffff; --panel2:#eef3f8;
+    --border:#dde4ec; --border2:#c6d0dd;
+    --text:#16202e; --muted:#52616f; --faint:#8492a2;
+    --accent:#0d9488; --accent-d:#0f766e; --amber:#b45309; --violet:#7c3aed;
+    --red:#dc2626; --green:#15803d; --blue:#1d4ed8;
+    --c-kw:#cf222e; --c-str:#0a3069; --c-com:#6e7781; --c-num:#0550ae;
+    --c-fn:#8250df; --c-call:#0969da; --c-blt:#1a7f37; --c-dec:#9a6700;
+    --code-bg:#f6f8fa; --code-fg:#1f2630; --code-inline-fg:#0550ae;
+    --topbar-bg:rgba(247,249,252,.85);
+  }
+  :root[data-theme="light"] body{ -webkit-font-smoothing:auto; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+
+  /* top bar */
+  .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
+    color:#06121a;font-size:13px}
+  .navlinks{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .navlinks a{color:var(--muted)} .navlinks a:hover{color:var(--text);text-decoration:none}
+  .themebtn{margin-left:14px;background:var(--panel2);border:1px solid var(--border2);
+    color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px;
+    line-height:1;display:grid;place-items:center;flex:0 0 auto}
+  .themebtn:hover{border-color:var(--accent-d)}
+
+  /* hero */
+  .hero{padding:62px 0 30px;border-bottom:1px solid var(--border)}
+  .hero h1{font-size:42px;line-height:1.1;margin:0 0 14px;letter-spacing:-.5px}
+  .hero h1 .grad{background:linear-gradient(120deg,var(--accent),var(--violet));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p.lead{font-size:18px;color:var(--muted);max-width:680px;margin:0 0 22px}
+  .pills{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{font-size:13px;border:1px solid var(--border2);color:var(--muted);
+    padding:5px 11px;border-radius:999px;background:var(--bg2)}
+  .pill b{color:var(--accent)}
+
+  section{padding:38px 0;border-bottom:1px solid var(--border)}
+  section h2{font-size:26px;margin:0 0 6px;letter-spacing:-.3px}
+  section .sub{color:var(--muted);margin:0 0 22px}
+  h3{font-size:19px;margin:26px 0 8px}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 16px;padding-left:22px} li{margin:5px 0}
+  strong{color:#fff}
+
+  /* cards grid (curriculum) */
+  .cards{display:grid;grid-template-columns:1fr;gap:14px}
+  .lcard{display:flex;gap:16px;align-items:flex-start;border:1px solid var(--border);
+    background:linear-gradient(180deg,var(--panel),var(--bg2));border-radius:14px;
+    padding:18px 20px;transition:border-color .15s,transform .15s}
+  .lcard:hover{border-color:var(--border2);transform:translateY(-1px)}
+  a.lcard{text-decoration:none;color:inherit;cursor:pointer}
+  a.lcard:hover{text-decoration:none}
+  a.lcard:hover .lbody h4{color:var(--accent)}
+  a.lcard:hover .status.go{filter:brightness(1.08)}
+  .lcard.active{border-color:var(--accent-d);box-shadow:0 0 0 1px rgba(45,212,191,.18)}
+  .lcard.locked{opacity:.62}
+  .lnum{flex:0 0 auto;width:42px;height:42px;border-radius:11px;display:grid;
+    place-items:center;font-weight:700;font-size:17px;background:var(--panel2);
+    border:1px solid var(--border2);color:var(--muted)}
+  .lcard.active .lnum{background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#06121a;border-color:transparent}
+  .lbody{flex:1;min-width:0}
+  .lbody h4{margin:1px 0 4px;font-size:17px}
+  .lbody h4 a{color:var(--text)} .lbody h4 a:hover{color:var(--accent)}
+  .lbody p{margin:0 0 9px;color:var(--muted);font-size:14.5px}
+  .tags{display:flex;gap:7px;flex-wrap:wrap}
+  .tag{font-size:11.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--faint);
+    border:1px solid var(--border);border-radius:6px;padding:2px 7px;background:var(--bg)}
+  .status{flex:0 0 auto;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;
+    align-self:center}
+  .status.go{color:#06121a;background:var(--accent)}
+  .status.soon{color:var(--muted);background:var(--panel2);border:1px solid var(--border2)}
+
+  /* callouts */
+  .callout{border:1px solid var(--border2);border-left-width:3px;border-radius:10px;
+    padding:13px 16px;margin:18px 0;background:var(--bg2);font-size:14.5px}
+  .callout .ct{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
+    margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .callout p:last-child{margin-bottom:0}
+  .callout.info{border-left-color:var(--blue)} .callout.info .ct{color:var(--blue)}
+  .callout.key{border-left-color:var(--accent)} .callout.key .ct{color:var(--accent)}
+  .callout.warn{border-left-color:var(--amber)} .callout.warn .ct{color:var(--amber)}
+  .callout.fail{border-left-color:var(--red)} .callout.fail .ct{color:var(--red)}
+  .callout.cost{border-left-color:var(--violet)} .callout.cost .ct{color:var(--violet)}
+
+  /* code blocks */
+  figure.code{margin:18px 0;border:1px solid var(--border2);border-radius:12px;
+    overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px}
+  .chip{font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:6px;
+    text-transform:uppercase}
+  .chip.raw{background:rgba(245,176,86,.15);color:var(--amber);border:1px solid rgba(245,176,86,.3)}
+  .chip.lc{background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3)}
+  .chip.run{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .fname{color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  figure.code .copy{margin-left:auto;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border2);border-radius:7px;padding:4px 10px;font-size:12px;
+    cursor:pointer;font-family:var(--sans)}
+  figure.code .copy:hover{color:var(--text);border-color:var(--accent-d)}
+  figure.code pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6}
+  figure.code code{font-family:var(--mono);white-space:pre}
+  :not(pre)>code{font-family:var(--mono);font-size:.9em;background:var(--panel2);
+    border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--code-inline-fg)}
+
+  /* token colors */
+  .t-kw{color:var(--c-kw)} .t-str{color:var(--c-str)} .t-com{color:var(--c-com);font-style:italic}
+  .t-num{color:var(--c-num)} .t-fn{color:var(--c-fn)} .t-call{color:var(--c-call)}
+  .t-blt{color:var(--c-blt)} .t-dec{color:var(--c-dec)}
+
+  /* model response card */
+  .response{border:1px solid var(--border2);border-radius:12px;margin:18px 0;overflow:hidden}
+  .response .rhead{background:var(--panel2);padding:8px 14px;font-size:12.5px;font-weight:600;
+    color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .response .rhead::before{content:"▍";color:var(--accent)}
+  .response .rbody{padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;
+    white-space:pre-wrap;color:var(--code-fg);background:var(--code-bg)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);color:var(--text);font-weight:600}
+  td{color:var(--muted)} td strong{color:var(--text)}
+
+  /* try-it */
+  .tryit{border:1px dashed var(--border2);border-radius:12px;padding:18px 20px;
+    background:linear-gradient(180deg,rgba(45,212,191,.04),transparent);margin:22px 0}
+  .tryit h3{margin-top:0;color:var(--accent)}
+
+  /* pager */
+  .pager{display:flex;justify-content:space-between;gap:14px;padding:30px 0 60px}
+  .pager a{flex:1;border:1px solid var(--border);border-radius:12px;padding:14px 18px;
+    background:var(--panel)}
+  .pager a:hover{border-color:var(--accent-d);text-decoration:none}
+  .pager .dir{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .pager .ttl{color:var(--text);font-weight:600;margin-top:2px}
+  .pager a.next{text-align:right}
+  .pager a.disabled{opacity:.4;pointer-events:none}
+
+  footer{padding:30px 0;color:var(--faint);font-size:13px;text-align:center}
+  .kbd{font-family:var(--mono);font-size:.85em;background:var(--panel2);border:1px solid var(--border2);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  hr.soft{border:none;border-top:1px solid var(--border);margin:26px 0}
+  @media(max-width:600px){.hero h1{font-size:32px}.navlinks{display:none}.themebtn{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap row">
+  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <nav class="navlinks">
+    <a href="#project">Project</a>
+    <a href="#how">How it works</a>
+    <a href="#setup">Setup</a>
+    <a href="#curriculum">Lessons</a>
+    <a href="#about">About</a>
+  </nav>
+  <button class="themebtn" id="themeToggle" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">🌙</button>
+</div></div>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>Modern Prompting,<br><span class="grad">built twice.</span></h1>
+    <p class="lead">A hands-on course in the prompting techniques used in production today — each one
+      implemented <strong>from scratch with the raw Gemini SDK</strong> and again <strong>with
+      LangChain / LangGraph</strong>, so you see exactly what the framework abstracts away.</p>
+    <div class="pills">
+      <span class="pill">🐍 <b>Python</b> + Google Gemini SDK</span>
+      <span class="pill">🔗 contrasted with <b>LangChain / LangGraph</b></span>
+      <span class="pill">🎯 one real project: <b>Nimbus Support Agent</b></span>
+      <span class="pill">🎓 level: <b>beginner-friendly</b></span>
+    </div>    
+  </header>
+
+  <section id="project">
+    <h2>The project we build</h2>
+    <p class="sub">Every technique plugs into one coherent system — not nine disconnected toys.</p>
+    <p><strong>Nimbus</strong> is a fictional SaaS: a cloud file-sync &amp; storage product (think
+      Dropbox). We are building <strong>Nimbus Support Agent</strong> — the AI that answers customer
+      questions, triages tickets, troubleshoots sync failures, looks up accounts, and grounds its
+      answers in the help center.</p>
+    <p>As the lessons progress, this one agent gains capabilities:</p>
+    <ul>
+      <li><strong>Classifies</strong> incoming messages (billing / bug / how-to / cancellation / other) — <em>few-shot</em>.</li>
+      <li><strong>Speaks in a consistent voice</strong> with guardrails and a refusal policy — <em>role/system prompting</em>.</li>
+      <li><strong>Troubleshoots</strong> step by step — <em>chain-of-thought + self-consistency</em>.</li>
+      <li><strong>Runs a pipeline</strong>: classify → route → draft → self-critique — <em>prompt chaining</em>.</li>
+      <li><strong>Emits a validated ticket</strong> and <strong>calls tools</strong> (account/order lookup) — <em>structured output + tool use</em>.</li>
+      <li><strong>Acts autonomously</strong> across tools in a loop — <em>ReAct agents</em>.</li>
+      <li><strong>Cites the help center</strong> and admits when it doesn't know — <em>retrieval-augmented prompting</em>.</li>
+      <li><strong>Is measured and tuned</strong> against a golden set — <em>evaluation &amp; optimization</em>.</li>
+    </ul>
+    <h3>Shared assets (reused in every lesson)</h3>
+    <ul>
+      <li><code>code/kb/</code> — a small help-center knowledge base (sync errors, billing, plans, sharing).</li>
+      <li><code>code/data/accounts.json</code> — a fake account/orders datastore for the tool-use lessons.</li>
+      <li><code>code/nimbus/llm.py</code> — a reusable client wrapper that bakes in the <em>real constraints</em>:
+        retries + backoff, timeouts, token counting, cost estimation, and graceful failure.</li>
+      <li><code>code/data/evalset.jsonl</code> — a golden set of Q&amp;As and labels we grow as we go.</li>
+    </ul>
+  </section>
+
+  <section id="how">
+    <h2>How each lesson works</h2>
+    <p class="sub">Same outcome, two implementations, with the trade-offs made explicit.</p>
+    <div class="cards" style="gap:12px">
+      <div class="lcard" style="cursor:default">
+        <span class="chip raw" style="align-self:flex-start;margin-top:3px">Raw</span>
+        <div class="lbody"><h4>From scratch with the Gemini SDK</h4>
+          <p>You hold the message list, the loop, the retries, the JSON parsing. Nothing is hidden — you
+          learn what the technique actually <em>is</em> at the API level.</p></div>
+      </div>
+      <div class="lcard" style="cursor:default">
+        <span class="chip lc" style="align-self:flex-start;margin-top:3px">LC</span>
+        <div class="lbody"><h4>The same thing in LangChain / LangGraph</h4>
+          <p>Then we rebuild it with the framework and ask: what did it save us? What did it hide? When
+          is the abstraction worth it, and when does it get in the way?</p></div>
+      </div>
+    </div>
+    <div class="callout key"><div class="ct">⚙ Real constraints, baked in</div>
+      <p>Every lesson respects production reality: <strong>token &amp; cost budgets</strong>,
+      <strong>latency</strong>, <strong>rate limits</strong>, <strong>non-deterministic output</strong>,
+      <strong>evaluation</strong>, and <strong>graceful failure</strong>. No happy-path-only toys.</p>
+    </div>
+    <p>Each lesson also tells you, for its technique: <strong>when to use it</strong>,
+      <strong>why it works</strong>, its <strong>failure modes</strong>, and the
+      <strong>cost / latency / reliability trade-offs</strong>.</p>
+  </section>
+
+  <section id="setup">
+    <h2>Setup (do this once)</h2>
+    <p class="sub">You need Python 3.10+ and a Gemini API key.</p>
+    <ol>
+      <li>Get a free key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</li>
+      <li>Install the packages used across the course:</li>
+    </ol>
+    <figure class="code">
+      <figcaption><span class="chip run">Shell</span><span class="fname">install.sh</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="bash"></code></pre>
+      <script type="text/plain" class="src">python -m venv .venv
+# Windows:  .venv\Scripts\activate      macOS/Linux:  source .venv/bin/activate
+
+# Raw-SDK lessons need only the first package; the rest are for the LangChain side.
+pip install google-genai pydantic
+pip install langchain langchain-google-genai langgraph
+</script>
+    </figure>
+    <ol start="3"><li>Set your API key as an environment variable (the SDK reads it automatically):</li></ol>
+    <figure class="code">
+      <figcaption><span class="chip run">Shell</span><span class="fname">env</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="bash"></code></pre>
+      <script type="text/plain" class="src"># macOS / Linux
+export GEMINI_API_KEY="your-key-here"
+
+# Windows (PowerShell)
+$env:GEMINI_API_KEY = "your-key-here"
+</script>
+    </figure>
+    <div class="callout info"><div class="ct">ℹ Why an env var?</div>
+      <p>Hardcoding keys in source is the most common way people leak them on GitHub. The Gemini SDK
+      reads <code>GEMINI_API_KEY</code> (or <code>GOOGLE_API_KEY</code>) from the environment, so your
+      code never contains the secret. We'll follow this everywhere.</p>
+    </div>
+    <p>That's it — Lesson 1 starts with a 5-line smoke test to confirm everything works, then builds the
+      shared client wrapper the rest of the course depends on.</p>
+  </section>
+
+  <section id="curriculum">
+    <h2>The curriculum</h2>
+    <p class="sub">Lessons build on each other — read them in order. New ones unlock as we write them together.</p>
+    <div class="cards">
+
+      <a class="lcard" href="lessons/lesson-01-foundations.html">
+        <span class="lnum">1</span>
+        <div class="lbody">
+          <h4>Foundations &amp; your first prompt</h4>
+          <p>API mechanics for beginners — tokens, roles, temperature, cost math — and the
+            <strong>zero-shot</strong> baseline. We build the reusable <code>llm.py</code> wrapper
+            (retries, timeouts, cost) the whole course reuses.</p>
+          <div class="tags"><span class="tag">zero-shot</span><span class="tag">tokens &amp; cost</span>
+            <span class="tag">retries</span><span class="tag">graceful failure</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-02-few-shot.html">
+        <span class="lnum">2</span>
+        <div class="lbody">
+          <h4>Few-shot prompting</h4>
+          <p>Build the Nimbus intent router by <em>showing</em> examples. Zero-shot vs few-shot accuracy,
+            the failure modes, and the token cost of examples.</p>
+          <div class="tags"><span class="tag">few-shot</span><span class="tag">classification</span>
+            <span class="tag">mini-eval</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-03-system-prompting.html">
+        <span class="lnum">3</span>
+        <div class="lbody">
+          <h4>Role &amp; system prompting</h4>
+          <p>Give the agent a persona, tone, guardrails, and a refusal policy that holds — plus a
+            multi-turn <code>SupportAgent</code> and the honest "it's not a security boundary" caveat.</p>
+          <div class="tags"><span class="tag">system prompt</span><span class="tag">guardrails</span>
+            <span class="tag">multi-turn</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-04-chain-of-thought.html">
+        <span class="lnum">4</span>
+        <div class="lbody">
+          <h4>Chain-of-thought &amp; variants</h4>
+          <p>Make the agent reason before answering: zero-shot &amp; few-shot CoT, self-consistency
+            (sample N, vote), and the modern reality of native "thinking" models — with the cost each adds.</p>
+          <div class="tags"><span class="tag">CoT</span><span class="tag">self-consistency</span>
+            <span class="tag">thinking</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-05-prompt-chaining.html">
+        <span class="lnum">5</span>
+        <div class="lbody">
+          <h4>Prompt chaining &amp; self-refine</h4>
+          <p>Wire L2 + L3 into a real pipeline: classify → route → draft → critique → refine. Raw vs
+            LCEL — and exactly where you outgrow LCEL and reach for LangGraph.</p>
+          <div class="tags"><span class="tag">chaining</span><span class="tag">self-refine</span>
+            <span class="tag">LCEL</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-06-structured-output-tools.html">
+        <span class="lnum">6</span>
+        <div class="lbody">
+          <h4>Structured output &amp; tool use</h4>
+          <p>Stop parsing prose: emit a schema-validated <code>Ticket</code> (Pydantic), and call
+            <code>get_subscription</code> / <code>get_recent_orders</code> via function calling.</p>
+          <div class="tags"><span class="tag">JSON schema</span><span class="tag">function calling</span>
+            <span class="tag">safety</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-07-react-agents.html">
+        <span class="lnum">7</span>
+        <div class="lbody">
+          <h4>ReAct-style agents</h4>
+          <p>An agent that reasons + acts over tools in a loop. The raw think/act/observe loop vs
+            <code>create_agent</code> (LangGraph) — plus the step and budget guards that keep it safe.</p>
+          <div class="tags"><span class="tag">ReAct</span><span class="tag">create_agent</span>
+            <span class="tag">guards</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-08-rag.html">
+        <span class="lnum">8</span>
+        <div class="lbody">
+          <h4>Retrieval-augmented prompting (RAG)</h4>
+          <p>Embed the help center, retrieve the right passages, and ground answers with citations — or an
+            honest "I don't know". Finally fixes the Lesson 1 hallucination.</p>
+          <div class="tags"><span class="tag">embeddings</span><span class="tag">RAG</span>
+            <span class="tag">citations</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard" href="lessons/lesson-09-evaluation.html">
+        <span class="lnum">9</span>
+        <div class="lbody">
+          <h4>Evaluation &amp; optimization</h4>
+          <p>A golden set, real metrics (exact-match, groundedness, LLM-as-judge), and the optimization
+            loop that proves a prompt change helped. DSPy + LangSmith noted.</p>
+          <div class="tags"><span class="tag">eval</span><span class="tag">LLM-as-judge</span>
+            <span class="tag">optimization</span></div>
+        </div>
+        <span class="status go">Open →</span>
+      </a>
+
+      <a class="lcard active" href="lessons/lesson-10-capstone.html">
+        <span class="lnum">10</span>
+        <div class="lbody">
+          <h4>Capstone + outdated tricks</h4>
+          <p>Wire the full agent together, end to end — then an honest, measured list of prompting tricks
+            that no longer earn their keep.</p>
+          <div class="tags"><span class="tag">capstone</span><span class="tag">myth-busting</span></div>
+        </div>
+        <span class="status go">Start →</span>
+      </a>
+
+    </div>
+  </section>
+
+  <section id="about">
+    <h2>About this course</h2>
+    <p class="sub">Who made it, and how.</p>
+    <p>I'm <strong>Amir Shehzad</strong>. I built Prompting Lab to learn the techniques behind production
+      LLM apps the way I learn best — by implementing each one <em>twice</em>: once from scratch against
+      the raw SDK, once with a framework, so I understood exactly what the abstractions do. I ran and verified every lesson and code sample myself as I built it.</p>
+    <p>If you're hiring or just want to talk LLM engineering, I'd love to connect.</p>
+  </section>
+
+  <footer>
+    Prompting Lab — a build-it-twice course anchored to the Nimbus Support Agent.<br>
+    Code targets Python + the Google Gemini SDK, contrasted with LangChain / LangGraph.
+  </footer>
+</div>
+
+<script>
+/* ============ Shared scripts (identical across all lessons) ============ */
+(function(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  function hlPython(code){
+    const KW=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+    const BLT=new Set("print len range dict list set tuple str int float bool open enumerate zip map filter sum min max sorted reversed type isinstance issubclass super getattr setattr hasattr abs round repr input format vars dir id".split(" "));
+    const re=/([rbfuRBFU]{0,2})("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*)|([rbfuRBFU]{0,2})("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(@[A-Za-z_][\w.]*)|(\b\d[\w.]*\b)|([A-Za-z_]\w*)/g;
+    let out="",last=0,m,prev="";
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[2]!==undefined){ out+='<span class="t-str">'+esc((m[1]||"")+m[2])+'</span>'; prev=""; }
+      else if(m[3]!==undefined){ out+='<span class="t-com">'+esc(m[3])+'</span>'; prev=""; }
+      else if(m[5]!==undefined){ out+='<span class="t-str">'+esc((m[4]||"")+m[5])+'</span>'; prev=""; }
+      else if(m[6]!==undefined){ out+='<span class="t-dec">'+esc(m[6])+'</span>'; prev=""; }
+      else if(m[7]!==undefined){ out+='<span class="t-num">'+esc(m[7])+'</span>'; prev=""; }
+      else if(m[8]!==undefined){
+        const w=m[8], nxt=code[re.lastIndex];
+        if(KW.has(w)) out+='<span class="t-kw">'+esc(w)+'</span>';
+        else if(prev==="def"||prev==="class") out+='<span class="t-fn">'+esc(w)+'</span>';
+        else if(BLT.has(w)) out+='<span class="t-blt">'+esc(w)+'</span>';
+        else if(nxt==="(") out+='<span class="t-call">'+esc(w)+'</span>';
+        else out+=esc(w);
+        prev=w;
+      }
+    }
+    out+=esc(code.slice(last));
+    return out;
+  }
+
+  function hlBash(code){
+    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+  }
+
+  document.querySelectorAll("figure.code").forEach(fig=>{
+    const codeEl=fig.querySelector("code.render");
+    const src=fig.querySelector("script.src");
+    if(codeEl&&src){
+      let txt=src.textContent.replace(/^\n/,"").replace(/\s+$/,"");
+      const lang=codeEl.getAttribute("data-lang")||"python";
+      codeEl.innerHTML = lang==="bash" ? hlBash(txt) : hlPython(txt);
+      codeEl.dataset.raw=txt;
+    }
+    const btn=fig.querySelector(".copy");
+    if(btn){btn.addEventListener("click",()=>{
+      const raw=fig.querySelector("code.render")?.dataset.raw||"";
+      navigator.clipboard.writeText(raw).then(()=>{
+        const o=btn.textContent;btn.textContent="Copied ✓";
+        setTimeout(()=>btn.textContent=o,1200);
+      });
+    });}
+  });
+
+  // ---- theme toggle (default dark; choice persisted in localStorage) ----
+  var tb=document.getElementById("themeToggle");
+  function syncIcon(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(tb) tb.textContent = light ? "☀️" : "🌙";
+  }
+  syncIcon();
+  if(tb) tb.addEventListener("click",function(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(light) document.documentElement.removeAttribute("data-theme");
+    else      document.documentElement.setAttribute("data-theme","light");
+    try{ localStorage.setItem("plab-theme", light ? "dark" : "light"); }catch(e){}
+    syncIcon();
+  });
+})();
+</script>
+</body>
+</html>

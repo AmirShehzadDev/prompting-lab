@@ -1,0 +1,28 @@
+{
+  "alice@example.com": {
+    "name": "Alice Tan",
+    "plan": "Plus",
+    "status": "active",
+    "renews": "2026-07-15",
+    "orders": [
+      {"id": "NB-1001", "date": "2026-06-01", "item": "Plus monthly", "amount": 10.0},
+      {"id": "NB-1002", "date": "2026-06-01", "item": "Plus monthly (duplicate)", "amount": 10.0}
+    ]
+  },
+  "bob@example.com": {
+    "name": "Bob Reyes",
+    "plan": "Free",
+    "status": "active",
+    "renews": null,
+    "orders": []
+  },
+  "carol@example.com": {
+    "name": "Carol Singh",
+    "plan": "Pro",
+    "status": "past_due",
+    "renews": "2026-06-20",
+    "orders": [
+      {"id": "NB-0900", "date": "2026-05-20", "item": "Pro monthly", "amount": 25.0}
+    ]
+  }
+}

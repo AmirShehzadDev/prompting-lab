@@ -1,0 +1,10 @@
+{"message": "Refund me for the double charge please", "intent": "billing"}
+{"message": "App freezes whenever I upload a big file", "intent": "bug"}
+{"message": "How can I restore a file I deleted?", "intent": "how_to"}
+{"message": "Cancel my subscription effective today", "intent": "cancellation"}
+{"message": "Are you hiring backend engineers?", "intent": "other"}
+{"message": "Upgrade me to Pro and charge my card", "intent": "billing"}
+{"message": "Sync is stuck on 'paused' and won't move", "intent": "bug"}
+{"message": "Where do I find the share link button?", "intent": "how_to"}
+{"message": "I want to close my account for good", "intent": "cancellation"}
+{"message": "Do you integrate with Slack?", "intent": "other"}

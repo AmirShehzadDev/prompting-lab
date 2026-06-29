@@ -1,0 +1,8 @@
+# Raw-SDK lessons need only these two:
+google-genai>=2.10
+pydantic>=2
+
+# The LangChain side of each lesson also needs:
+langchain>=1.0
+langchain-google-genai>=4.2
+langgraph>=1.0

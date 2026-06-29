@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 8 — Retrieval-augmented prompting (RAG)</title>
+<script>/* set theme before paint to avoid a flash */(function(){try{if(localStorage.getItem('plab-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+  :root{
+    --bg:#0c0f14; --bg2:#11161d; --panel:#151b24; --panel2:#1b2330;
+    --border:#232c39; --border2:#2e3a4a;
+    --text:#e7eef6; --muted:#93a1b1; --faint:#6b7888;
+    --accent:#2dd4bf; --accent-d:#14b8a6; --amber:#f5b056; --violet:#a78bfa;
+    --red:#f87171; --green:#4ade80; --blue:#79c0ff;
+    --c-kw:#f97583; --c-str:#9ecbff; --c-com:#6b7888; --c-num:#f8c572;
+    --c-fn:#d2a8ff; --c-call:#79c0ff; --c-blt:#56d4bd; --c-dec:#f5b056;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    --code-bg:#0a0d12; --code-fg:#dce6f0; --code-inline-fg:#cfe7ff;
+    --topbar-bg:rgba(12,15,20,.82);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9fc; --bg2:#eef2f6; --panel:#ffffff; --panel2:#eef3f8;
+    --border:#dde4ec; --border2:#c6d0dd;
+    --text:#16202e; --muted:#52616f; --faint:#8492a2;
+    --accent:#0d9488; --accent-d:#0f766e; --amber:#b45309; --violet:#7c3aed;
+    --red:#dc2626; --green:#15803d; --blue:#1d4ed8;
+    --c-kw:#cf222e; --c-str:#0a3069; --c-com:#6e7781; --c-num:#0550ae;
+    --c-fn:#8250df; --c-call:#0969da; --c-blt:#1a7f37; --c-dec:#9a6700;
+    --code-bg:#f6f8fa; --code-fg:#1f2630; --code-inline-fg:#0550ae;
+    --topbar-bg:rgba(247,249,252,.85);
+  }
+  :root[data-theme="light"] body{ -webkit-font-smoothing:auto; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
+    color:#06121a;font-size:13px}
+  .navlinks{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .navlinks a{color:var(--muted)} .navlinks a:hover{color:var(--text);text-decoration:none}
+  .themebtn{margin-left:14px;background:var(--panel2);border:1px solid var(--border2);
+    color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px;
+    line-height:1;display:grid;place-items:center;flex:0 0 auto}
+  .themebtn:hover{border-color:var(--accent-d)}
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  section h2{font-size:25px;margin:0 0 6px;letter-spacing:-.3px}
+  section .sub{color:var(--muted);margin:0 0 20px}
+  h3{font-size:19px;margin:26px 0 8px} h4{font-size:16px;margin:18px 0 6px}
+  p{margin:0 0 14px} ul,ol{margin:0 0 16px;padding-left:22px} li{margin:6px 0}
+  strong{color:var(--text)} :root:not([data-theme]) strong, :root[data-theme="dark"] strong{color:#fff}
+  .callout{border:1px solid var(--border2);border-left-width:3px;border-radius:10px;
+    padding:13px 16px;margin:18px 0;background:var(--bg2);font-size:14.5px}
+  .callout .ct{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
+    margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .callout p:last-child{margin-bottom:0}
+  .callout.info{border-left-color:var(--blue)} .callout.info .ct{color:var(--blue)}
+  .callout.key{border-left-color:var(--accent)} .callout.key .ct{color:var(--accent)}
+  .callout.warn{border-left-color:var(--amber)} .callout.warn .ct{color:var(--amber)}
+  .callout.fail{border-left-color:var(--red)} .callout.fail .ct{color:var(--red)}
+  .callout.cost{border-left-color:var(--violet)} .callout.cost .ct{color:var(--violet)}
+  figure.code{margin:18px 0;border:1px solid var(--border2);border-radius:12px;
+    overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px}
+  .chip{font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:6px;
+    text-transform:uppercase}
+  .chip.raw{background:rgba(245,176,86,.15);color:var(--amber);border:1px solid rgba(245,176,86,.3)}
+  .chip.lc{background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3)}
+  .chip.run{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .chip.prompt{background:rgba(121,192,255,.13);color:var(--blue);border:1px solid rgba(121,192,255,.3)}
+  .fname{color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  figure.code .copy{margin-left:auto;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border2);border-radius:7px;padding:4px 10px;font-size:12px;
+    cursor:pointer;font-family:var(--sans)}
+  figure.code .copy:hover{color:var(--text);border-color:var(--accent-d)}
+  figure.code pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6}
+  figure.code code{font-family:var(--mono);white-space:pre}
+  :not(pre)>code{font-family:var(--mono);font-size:.9em;background:var(--panel2);
+    border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--code-inline-fg)}
+  .t-kw{color:var(--c-kw)} .t-str{color:var(--c-str)} .t-com{color:var(--c-com);font-style:italic}
+  .t-num{color:var(--c-num)} .t-fn{color:var(--c-fn)} .t-call{color:var(--c-call)}
+  .t-blt{color:var(--c-blt)} .t-dec{color:var(--c-dec)}
+  .response{border:1px solid var(--border2);border-radius:12px;margin:18px 0;overflow:hidden}
+  .response .rhead{background:var(--panel2);padding:8px 14px;font-size:12.5px;font-weight:600;
+    color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .response .rhead::before{content:"▍";color:var(--accent)}
+  .response.bad .rhead::before{color:var(--red)} .response.good .rhead::before{color:var(--green)}
+  .response .rbody{padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;
+    white-space:pre-wrap;color:var(--code-fg);background:var(--code-bg)}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);color:var(--text);font-weight:600}
+  td{color:var(--muted)} td strong{color:var(--text)}
+  .tryit{border:1px dashed var(--border2);border-radius:12px;padding:18px 20px;
+    background:linear-gradient(180deg,rgba(45,212,191,.04),transparent);margin:22px 0}
+  .tryit h3{margin-top:0;color:var(--accent)}
+  .pager{display:flex;justify-content:space-between;gap:14px;padding:30px 0 60px}
+  .pager a{flex:1;border:1px solid var(--border);border-radius:12px;padding:14px 18px;background:var(--panel)}
+  .pager a:hover{border-color:var(--accent-d);text-decoration:none}
+  .pager .dir{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .pager .ttl{color:var(--text);font-weight:600;margin-top:2px}
+  .pager a.next{text-align:right} .pager a.disabled{opacity:.4;pointer-events:none}
+  footer{padding:30px 0;color:var(--faint);font-size:13px;text-align:center}
+  .kbd{font-family:var(--mono);font-size:.85em;background:var(--panel2);border:1px solid var(--border2);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  hr.soft{border:none;border-top:1px solid var(--border);margin:26px 0}
+  .lhead{padding:46px 0 26px;border-bottom:1px solid var(--border)}
+  .crumb{font-size:13px;color:var(--faint);margin-bottom:14px} .crumb a{color:var(--muted)}
+  .lhead h1{font-size:36px;line-height:1.12;margin:0 0 12px;letter-spacing:-.4px}
+  .lhead p.lead{font-size:18px;color:var(--muted);max-width:680px;margin:0 0 18px}
+  .meta-badges{display:flex;gap:9px;flex-wrap:wrap}
+  .mb{font-size:12.5px;border:1px solid var(--border2);color:var(--muted);
+    padding:4px 10px;border-radius:999px;background:var(--bg2)} .mb b{color:var(--accent)}
+  .toc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:22px 0}
+  .toc ol{margin:6px 0 0;padding-left:20px} .toc li{margin:3px 0;color:var(--muted)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:20px 0;font-size:13px}
+  .flow .node{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;
+    padding:8px 12px;font-weight:600}
+  .flow .node small{display:block;color:var(--faint);font-weight:400;font-size:11px}
+  .flow .arr{color:var(--accent);font-weight:700}
+  @media(max-width:600px){.lhead h1{font-size:28px}.navlinks{display:none}.themebtn{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap row">
+  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <nav class="navlinks">
+    <a href="../index.html">Home</a>
+    <a href="#embed">Embeddings</a>
+    <a href="#retrieve">Retrieve &amp; ground</a>
+    <a href="#fail">Failure modes</a>
+    <a href="#langchain">LangChain</a>
+  </nav>
+  <button class="themebtn" id="themeToggle" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">🌙</button>
+</div></div>
+
+<div class="wrap">
+  <header class="lhead">
+    <div class="crumb"><a href="../index.html">Prompting Lab</a> &nbsp;/&nbsp; Lesson 8</div>
+    <h1>Retrieval-augmented prompting (RAG)</h1>
+    <p class="lead">Way back in Lesson 1, the model answered a sync question by <em>inventing</em> Nimbus's
+      menu items. Tools (Lesson 6&ndash;7) fixed account facts, but the help-center knowledge is still made
+      up. RAG is the fix: find the real help article, put it in the prompt, and make the model answer from
+      it &mdash; with a citation, or an honest "I don't know".</p>
+    <div class="meta-badges">
+      <span class="mb">⏱ <b>~35 min</b></span>
+      <span class="mb">🎓 level: <b>intermediate</b></span>
+      <span class="mb">🧠 technique: <b>RAG (embed + retrieve + ground)</b></span>
+      <span class="mb">🧩 builds: <b>grounded answers + citations</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="toc">
+      <strong>In this lesson</strong>
+      <ol>
+        <li><a href="#what">What RAG is, and why it beats "just ask"</a></li>
+        <li><a href="#embed">Embeddings: turning text into searchable vectors</a></li>
+        <li><a href="#retrieve">Retrieve &amp; ground: the answer, with a citation</a></li>
+        <li><a href="#idk">The honesty win: "I don't know"</a></li>
+        <li><a href="#fail">Failure modes</a></li>
+        <li><a href="#cost">Cost, latency &amp; reliability</a></li>
+        <li><a href="#langchain">The same thing in LangChain</a></li>
+        <li><a href="#tradeoffs">Trade-offs &amp; try / modify</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 1 WHAT -->
+  <section id="what">
+    <h2>1 · What RAG is, and why it beats "just ask"</h2>
+    <p class="sub">The model knows a lot about the world and nothing about <em>your</em> docs. RAG bridges
+      that gap at prompt time.</p>
+    <p>A model can only answer from two sources: what it memorized in training, and what you put in the
+      prompt. Your Nimbus help center wasn't in training, so "just asking" forces the model to guess.
+      <strong>Retrieval-Augmented Generation</strong> flips that: before answering, you <em>retrieve</em>
+      the most relevant passages from your own documents and paste them into the prompt. The model reads
+      and synthesizes, instead of recalling and inventing.</p>
+    <div class="flow">
+      <span class="node">Question<small>"sync paused?"</small></span><span class="arr">&rarr;</span>
+      <span class="node">Embed<small>query &rarr; vector</small></span><span class="arr">&rarr;</span>
+      <span class="node">Retrieve<small>top-k similar chunks</small></span><span class="arr">&rarr;</span>
+      <span class="node">Augment<small>paste into prompt</small></span><span class="arr">&rarr;</span>
+      <span class="node">Generate<small>answer + cite</small></span>
+    </div>
+    <p>"Retrieval" here means <em>semantic</em> search, not keyword matching: we find passages whose
+      <em>meaning</em> is close to the question, even if they share no words. That's what embeddings give us.</p>
+  </section>
+
+  <!-- 2 WHY (folded into what) -->
+  <section id="why2">
+    <h2>2 · Why it works</h2>
+    <p class="sub">Three reasons RAG is the default way to give a model private knowledge.</p>
+    <ul>
+      <li><strong>Facts beat memory.</strong> An answer grounded in retrieved text is far less likely to
+        hallucinate than one pulled from fuzzy training memory.</li>
+      <li><strong>Fresh &amp; private.</strong> Update a help article and the next answer reflects it &mdash;
+        no retraining. Your data never has to be baked into a model.</li>
+      <li><strong>Auditable.</strong> Because you know which passages you injected, the model can cite them,
+        and you can verify the answer against the source.</li>
+    </ul>
+    <p>The catch: RAG is only as good as its retrieval. If you fetch the wrong passages, the model
+      confidently answers from the wrong context. So most of the engineering is in retrieval quality &mdash;
+      which is exactly what the failure-modes section is about.</p>
+  </section>
+
+  <!-- 3 EMBEDDINGS -->
+  <section id="embed">
+    <h2>3 · Embeddings: text as searchable vectors</h2>
+    <p class="sub">An embedding turns a piece of text into a list of numbers (a vector) that captures its
+      meaning. Similar meanings land close together; we measure "close" with cosine similarity.</p>
+    <p>First the embedding helpers. We use Gemini's embedding model, normalize the vectors (required for
+      <code>gemini-embedding-001</code> at non-default dimensions), and define cosine similarity as a plain
+      dot product of normalized vectors:</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">rag.py — embeddings</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">import math, pathlib
+from google import genai
+from google.genai import types
+
+client = genai.Client()
+EMBED_MODEL = "gemini-embedding-001"
+DIM = 768   # smaller = cheaper to store/compare; 128-3072 supported
+
+def l2_normalize(v):
+    n = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [x / n for x in v]
+
+def embed(texts, task_type):
+    """task_type matters: 'RETRIEVAL_DOCUMENT' for the KB, 'RETRIEVAL_QUERY' for questions."""
+    resp = client.models.embed_content(
+        model=EMBED_MODEL,
+        contents=texts,
+        config=types.EmbedContentConfig(output_dimensionality=DIM, task_type=task_type),
+    )
+    # gemini-embedding-001 needs manual L2 normalization when dim != 3072.
+    return [l2_normalize(e.values) for e in resp.embeddings]
+
+def cosine(a, b):                       # both already normalized -> cosine == dot product
+    return sum(x * y for x, y in zip(a, b))
+</script>
+    </figure>
+    <p>Now load the help center, split each article into paragraph-sized <strong>chunks</strong>, and embed
+      them <em>once</em> to build a simple in-memory index:</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">rag.py — build the index</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">KB_DIR = pathlib.Path(__file__).parent / "kb"
+
+def load_chunks():
+    """Split each .md article into paragraph chunks with a citable id."""
+    chunks = []
+    for path in sorted(KB_DIR.glob("*.md")):
+        paras = [p.strip() for p in path.read_text(encoding="utf-8").split("\n\n") if p.strip()]
+        for i, para in enumerate(paras):
+            chunks.append({"id": f"{path.stem}#{i}", "text": para})
+    return chunks
+
+CHUNKS = load_chunks()                                              # ~12 small passages
+DOC_VECS = embed([c["text"] for c in CHUNKS],                       # embed the KB ONCE
+                 task_type="RETRIEVAL_DOCUMENT")</script>
+    </figure>
+    <p>A "chunk" is a unit of retrieval. Paragraphs are a reasonable default: big enough to carry meaning,
+      small enough that a hit is precise. Each chunk keeps an <code>id</code> like
+      <code>sync-errors#0</code> so the model can cite it.</p>
+    <div class="callout key"><div class="ct">&#10022; Embed the corpus once, the query every time</div>
+      <p>Document embeddings are computed once and reused for every question (in production you'd persist
+      them in a vector database). Only the short query is embedded per request &mdash; cheap, since
+      embeddings are billed on input only.</p>
+    </div>
+  </section>
+
+  <!-- 4 RETRIEVE -->
+  <section id="retrieve">
+    <h2>4 · Retrieve &amp; ground: the answer, with a citation</h2>
+    <p class="sub">Embed the question, score it against every chunk, take the top matches, and tell the
+      model to answer only from them.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">rag.py — retrieve + answer</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from nimbus.llm import LLM
+from system_prompt import NIMBUS_SYSTEM
+
+def retrieve(query, k=3):
+    qv = embed([query], task_type="RETRIEVAL_QUERY")[0]
+    ranked = sorted(zip(CHUNKS, DOC_VECS),
+                    key=lambda cv: cosine(qv, cv[1]), reverse=True)
+    return [c for c, _ in ranked[:k]]
+
+llm = LLM()
+
+# Extend the Lesson 3 persona with grounding rules.
+RAG_RULES = (
+    "\n\nGROUNDING:\n"
+    "- Answer ONLY using the provided context passages.\n"
+    "- Cite the passage id(s) you used in brackets, e.g. [sync-errors#0].\n"
+    "- If the answer is not in the context, say you don't have that information "
+    "and offer to escalate to a human. Do NOT guess."
+)
+
+def answer(query, k=3):
+    hits = retrieve(query, k)
+    context = "\n\n".join(f"[{c['id']}] {c['text']}" for c in hits)
+    prompt = f"Context passages:\n{context}\n\nCustomer question: {query}"
+    return llm.generate(prompt, system=NIMBUS_SYSTEM + RAG_RULES,
+                        temperature=0.2, max_output_tokens=300)
+
+print(answer("My Nimbus app says 'sync paused' and won't resume. What do I do?"))</script>
+    </figure>
+    <div class="response good"><div class="rhead">representative output &mdash; grounded, with a citation</div>
+      <div class="rbody">Sorry about the paused sync! To resume it, open the Nimbus icon in your system
+tray (Windows) or menu bar (macOS), click the Activity tab, and choose
+"Resume sync". Note that sync auto-pauses on metered or VPN connections unless
+you allow it in Settings > Network. If it stays stuck, check Settings > Account
+for a "storage full" banner. [sync-errors#0]</div>
+    </div>
+    <p>Compare that to Lesson 1, where the model invented "Resume syncing" from the system tray. Now it
+      gives the <em>real</em> path (Activity tab &rarr; Resume sync) because it read the actual article &mdash;
+      and it cited <code>[sync-errors#0]</code> so you can verify. That is the whole point of RAG.</p>
+  </section>
+
+  <!-- 5 IDK -->
+  <section id="idk">
+    <h2>5 · The honesty win: "I don't know"</h2>
+    <p class="sub">Grounding doesn't just improve right answers &mdash; it lets the model correctly refuse
+      when the KB has nothing.</p>
+    <div class="response"><div class="rhead"><code>answer("Does Nimbus have an app for smartwatches?")</code></div>
+      <div class="rbody">I don't have information about smartwatch support in our help center, so I don't
+want to guess. I can escalate this to a human who can confirm &mdash; would you
+like me to do that?</div>
+    </div>
+    <p>Nothing in the KB matches, so the retrieved passages are off-topic, and the grounding rule kicks in:
+      it declines instead of fabricating a confident answer. An honest "I don't know" is a feature, not a
+      failure &mdash; it's what makes a support agent trustworthy.</p>
+    <div class="callout warn"><div class="ct">&#9888; Retrieval still runs even when nothing fits</div>
+      <p>Top-k always returns <em>something</em> &mdash; the k least-irrelevant chunks, even if all are
+      irrelevant. The model declining here depends on the grounding instruction <em>and</em> on the chunks
+      being clearly unrelated. A score threshold (ignore hits below a similarity cutoff) makes this more
+      robust; see the failure modes.</p>
+    </div>
+  </section>
+
+  <!-- 6 FAILURE MODES -->
+  <section id="fail">
+    <h2>6 · Failure modes</h2>
+    <p class="sub">RAG moves the hard problem from "generation" to "retrieval". These are where it breaks.</p>
+    <table>
+      <thead><tr><th>Failure</th><th>What happens</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Bad chunking</strong></td><td>Chunks too big (noisy, dilute the match) or too small (lose context).</td><td>Tune chunk size; align to natural units (paragraphs/sections); add slight overlap.</td></tr>
+        <tr><td><strong>Irrelevant retrieval</strong></td><td>The right passage isn't in the top-k, so the model answers from the wrong context.</td><td>Increase k; better embeddings; hybrid (keyword + vector) search; re-ranking.</td></tr>
+        <tr><td><strong>Nothing relevant exists</strong></td><td>Top-k returns weak matches and the model answers anyway.</td><td>Similarity-score threshold + a firm "say I don't know" rule (&sect;5).</td></tr>
+        <tr><td><strong>Context overflow</strong></td><td>Too many/long chunks blow the token budget or bury the answer ("lost in the middle").</td><td>Cap k; keep chunks small; put the most relevant first.</td></tr>
+        <tr><td><strong>Hallucinated citations</strong></td><td>The model cites an id it didn't use, or invents content not in the passage.</td><td>Verify cited ids exist; in high-stakes cases, check the claim against the cited text.</td></tr>
+        <tr><td><strong>Stale index</strong></td><td>You edit an article but the old embedding is still served.</td><td>Re-embed on change; version the index.</td></tr>
+        <tr><td><strong>task_type mismatch</strong></td><td>Embedding docs and queries with the wrong/identical task type hurts recall.</td><td>Use <code>RETRIEVAL_DOCUMENT</code> for the KB and <code>RETRIEVAL_QUERY</code> for questions.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 7 COST -->
+  <section id="cost">
+    <h2>7 · Cost, latency &amp; reliability</h2>
+    <ul>
+      <li><strong>Cost:</strong> embedding the corpus is a one-time cost; per request you pay for one tiny
+        query embedding plus the generation, whose input now includes the retrieved chunks. More chunks =
+        more input tokens &mdash; so k is a cost dial. Embeddings are billed on input only and are cheap.</li>
+      <li><strong>Latency:</strong> one extra embedding call + a similarity search (microseconds for a small
+        corpus; a vector DB handles millions). Usually a small addition before generation.</li>
+      <li><strong>Reliability:</strong> a large drop in hallucination <em>when retrieval is good</em>. The
+        failure mode shifts to "retrieved the wrong thing", which you fix with better chunking, k, and
+        thresholds &mdash; and measure (Lesson 9: groundedness).</li>
+    </ul>
+  </section>
+
+  <!-- 8 LANGCHAIN -->
+  <section id="langchain">
+    <h2>8 · The same thing in LangChain</h2>
+    <p class="sub">A vector store + retriever replaces our manual embed / normalize / cosine code.</p>
+    <figure class="code">
+      <figcaption><span class="chip lc">LangChain</span><span class="fname">rag_lc.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">import pathlib
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+KB_DIR = pathlib.Path(__file__).parent / "kb"
+docs = []
+for path in sorted(KB_DIR.glob("*.md")):
+    for i, para in enumerate(p.strip() for p in path.read_text(encoding="utf-8").split("\n\n") if p.strip()):
+        docs.append(Document(page_content=para, metadata={"id": f"{path.stem}#{i}"}))
+
+# The framework handles dimensionality + normalization for you.
+embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
+store = InMemoryVectorStore.from_documents(docs, embedding=embeddings)
+retriever = store.as_retriever(search_kwargs={"k": 3})
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are Nimbus Support. Answer ONLY from the context and cite [id]. "
+               "If the answer isn't in the context, say you don't know and offer to escalate."),
+    ("human", "Context:\n{context}\n\nQuestion: {question}"),
+])
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
+
+def format_docs(ds):
+    return "\n\n".join(f"[{d.metadata['id']}] {d.page_content}" for d in ds)
+
+def rag(question: str) -> str:
+    ctx = format_docs(retriever.invoke(question))
+    return (prompt | llm | StrOutputParser()).invoke({"context": ctx, "question": question})
+
+if __name__ == "__main__":
+    print(rag("My Nimbus app says 'sync paused' and won't resume. What do I do?"))</script>
+    </figure>
+    <table>
+      <thead><tr><th>Concern</th><th>Raw SDK</th><th>LangChain</th></tr></thead>
+      <tbody>
+        <tr><td>Embedding</td><td><code>embed_content</code> + manual L2 normalize</td><td><code>GoogleGenerativeAIEmbeddings</code> (handles it)</td></tr>
+        <tr><td>Storage + search</td><td>Your list + cosine loop</td><td><code>InMemoryVectorStore</code> + <code>as_retriever</code></td></tr>
+        <tr><td>Swap to a real DB</td><td>Rewrite the search</td><td>Swap the vector-store class; rest unchanged</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info"><div class="ct">&#8505; This is a strong case for the framework</div>
+      <p>RAG is where LangChain's abstractions pay off: the vector-store interface means you can prototype
+      with <code>InMemoryVectorStore</code> and later swap in Pinecone / pgvector / Chroma by changing one
+      class. It also quietly handled the normalization gotcha we had to do by hand. The cost: less insight
+      into how retrieval actually scores &mdash; which is exactly what you most want to debug when recall is bad.</p>
+    </div>
+  </section>
+
+  <!-- 9 TRADEOFFS + TRY -->
+  <section id="tradeoffs">
+    <h2>9 · Trade-offs &amp; try / modify</h2>
+    <table>
+      <thead><tr><th>Dimension</th><th>RAG</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cost</strong></td><td>🟠 One-time corpus embedding + larger prompts (retrieved context). k is the dial.</td></tr>
+        <tr><td><strong>Latency</strong></td><td>🟠 One extra embed + a search before generation.</td></tr>
+        <tr><td><strong>Reliability</strong></td><td>💚💚 Big hallucination drop + citations &mdash; <em>if</em> retrieval is good.</td></tr>
+        <tr><td><strong>Reach for it when…</strong></td><td>Answers depend on private, large, or changing knowledge (docs, policies, a help center).</td></tr>
+      </tbody>
+    </table>
+    <div class="tryit">
+      <h3>&#128296; Try / modify this</h3>
+      <ol>
+        <li><strong>See retrieval directly.</strong> Print <code>retrieve("how do I share a folder?")</code>
+          and read the chunk ids it returns. Did it find <code>sharing#0</code>?</li>
+        <li><strong>Break grounding.</strong> Remove the <code>RAG_RULES</code> and re-ask the smartwatch
+          question. Watch it start inventing again &mdash; proof the rule does the work.</li>
+        <li><strong>Tune k.</strong> Set <code>k=1</code> then <code>k=6</code>. Too low misses context; too
+          high adds noise and cost. Find the sweet spot for this KB.</li>
+        <li><strong>Add a threshold.</strong> Make <code>retrieve</code> drop chunks with
+          <code>cosine &lt; 0.55</code>. Confirm the smartwatch question now retrieves <em>nothing</em> and
+          the agent cleanly declines.</li>
+        <li><strong>Edit the KB.</strong> Change a fact in <code>kb/plans.md</code>, re-run, and watch the
+          answer update with no retraining. That's RAG's freshness win.</li>
+      </ol>
+    </div>
+    <div class="callout key"><div class="ct">&#10022; What you built</div>
+      <p>A working RAG pipeline over the Nimbus help center &mdash; embeddings, cosine retrieval, grounded
+      answers with citations, and an honest "I don't know" &mdash; raw and in LangChain. The Lesson 1
+      hallucination is finally fixed.</p>
+    </div>
+    <p style="color:var(--muted)"><strong>Next &mdash; Lesson 9: Evaluation &amp; optimization.</strong>
+      We've built a lot of prompts and claimed they're "better". Now we prove it: a golden eval set, real
+      metrics (exact-match, groundedness, LLM-as-judge), and systematic prompt optimization.</p>
+  </section>
+
+  <nav class="pager">
+    <a class="prev" href="lesson-07-react-agents.html">
+      <div class="dir">&larr; Previous</div><div class="ttl">Lesson 7 &middot; ReAct-style agents</div></a>
+    <a class="next" href="lesson-09-evaluation.html">
+      <div class="dir">Next &rarr;</div><div class="ttl">Lesson 9 &middot; Evaluation &amp; optimization</div></a>
+  </nav>
+
+  <footer>
+    Prompting Lab &middot; Lesson 8 of 10 &middot; anchored to the Nimbus Support Agent.<br>
+    Code targets Python + the Google Gemini SDK (<code>google-genai</code>), contrasted with LangChain.
+  </footer>
+</div>
+
+<script>
+/* ============ Shared scripts (identical across all lessons) ============ */
+(function(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  function hlPython(code){
+    const KW=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+    const BLT=new Set("print len range dict list set tuple str int float bool open enumerate zip map filter sum min max sorted reversed type isinstance issubclass super getattr setattr hasattr abs round repr input format vars dir id".split(" "));
+    const re=/([rbfuRBFU]{0,2})("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*)|([rbfuRBFU]{0,2})("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(@[A-Za-z_][\w.]*)|(\b\d[\w.]*\b)|([A-Za-z_]\w*)/g;
+    let out="",last=0,m,prev="";
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[2]!==undefined){ out+='<span class="t-str">'+esc((m[1]||"")+m[2])+'</span>'; prev=""; }
+      else if(m[3]!==undefined){ out+='<span class="t-com">'+esc(m[3])+'</span>'; prev=""; }
+      else if(m[5]!==undefined){ out+='<span class="t-str">'+esc((m[4]||"")+m[5])+'</span>'; prev=""; }
+      else if(m[6]!==undefined){ out+='<span class="t-dec">'+esc(m[6])+'</span>'; prev=""; }
+      else if(m[7]!==undefined){ out+='<span class="t-num">'+esc(m[7])+'</span>'; prev=""; }
+      else if(m[8]!==undefined){
+        const w=m[8], nxt=code[re.lastIndex];
+        if(KW.has(w)) out+='<span class="t-kw">'+esc(w)+'</span>';
+        else if(prev==="def"||prev==="class") out+='<span class="t-fn">'+esc(w)+'</span>';
+        else if(BLT.has(w)) out+='<span class="t-blt">'+esc(w)+'</span>';
+        else if(nxt==="(") out+='<span class="t-call">'+esc(w)+'</span>';
+        else out+=esc(w);
+        prev=w;
+      }
+    }
+    out+=esc(code.slice(last));
+    return out;
+  }
+  function hlBash(code){
+    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+  }
+  document.querySelectorAll("figure.code").forEach(fig=>{
+    const codeEl=fig.querySelector("code.render");
+    const src=fig.querySelector("script.src");
+    if(codeEl&&src){
+      let txt=src.textContent.replace(/^\n/,"").replace(/\s+$/,"");
+      const lang=codeEl.getAttribute("data-lang")||"python";
+      codeEl.innerHTML = lang==="bash" ? hlBash(txt) : hlPython(txt);
+      codeEl.dataset.raw=txt;
+    }
+    const btn=fig.querySelector(".copy");
+    if(btn){btn.addEventListener("click",()=>{
+      const raw=fig.querySelector("code.render")?.dataset.raw||"";
+      navigator.clipboard.writeText(raw).then(()=>{
+        const o=btn.textContent;btn.textContent="Copied ✓";
+        setTimeout(()=>btn.textContent=o,1200);
+      });
+    });}
+  });
+  var tb=document.getElementById("themeToggle");
+  function syncIcon(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(tb) tb.textContent = light ? "☀️" : "🌙";
+  }
+  syncIcon();
+  if(tb) tb.addEventListener("click",function(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(light) document.documentElement.removeAttribute("data-theme");
+    else      document.documentElement.setAttribute("data-theme","light");
+    try{ localStorage.setItem("plab-theme", light ? "dark" : "light"); }catch(e){}
+    syncIcon();
+  });
+})();
+</script>
+</body>
+</html>

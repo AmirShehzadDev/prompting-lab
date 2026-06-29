@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 5 — Prompt chaining &amp; self-refine</title>
+<script>/* set theme before paint to avoid a flash */(function(){try{if(localStorage.getItem('plab-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+  /* ============ Shared design system (identical across all lessons) ============ */
+  :root{
+    --bg:#0c0f14; --bg2:#11161d; --panel:#151b24; --panel2:#1b2330;
+    --border:#232c39; --border2:#2e3a4a;
+    --text:#e7eef6; --muted:#93a1b1; --faint:#6b7888;
+    --accent:#2dd4bf; --accent-d:#14b8a6; --amber:#f5b056; --violet:#a78bfa;
+    --red:#f87171; --green:#4ade80; --blue:#79c0ff;
+    --c-kw:#f97583; --c-str:#9ecbff; --c-com:#6b7888; --c-num:#f8c572;
+    --c-fn:#d2a8ff; --c-call:#79c0ff; --c-blt:#56d4bd; --c-dec:#f5b056;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    --code-bg:#0a0d12; --code-fg:#dce6f0; --code-inline-fg:#cfe7ff;
+    --topbar-bg:rgba(12,15,20,.82);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9fc; --bg2:#eef2f6; --panel:#ffffff; --panel2:#eef3f8;
+    --border:#dde4ec; --border2:#c6d0dd;
+    --text:#16202e; --muted:#52616f; --faint:#8492a2;
+    --accent:#0d9488; --accent-d:#0f766e; --amber:#b45309; --violet:#7c3aed;
+    --red:#dc2626; --green:#15803d; --blue:#1d4ed8;
+    --c-kw:#cf222e; --c-str:#0a3069; --c-com:#6e7781; --c-num:#0550ae;
+    --c-fn:#8250df; --c-call:#0969da; --c-blt:#1a7f37; --c-dec:#9a6700;
+    --code-bg:#f6f8fa; --code-fg:#1f2630; --code-inline-fg:#0550ae;
+    --topbar-bg:rgba(247,249,252,.85);
+  }
+  :root[data-theme="light"] body{ -webkit-font-smoothing:auto; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
+    color:#06121a;font-size:13px}
+  .navlinks{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .navlinks a{color:var(--muted)} .navlinks a:hover{color:var(--text);text-decoration:none}
+  .themebtn{margin-left:14px;background:var(--panel2);border:1px solid var(--border2);
+    color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px;
+    line-height:1;display:grid;place-items:center;flex:0 0 auto}
+  .themebtn:hover{border-color:var(--accent-d)}
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  section h2{font-size:25px;margin:0 0 6px;letter-spacing:-.3px}
+  section .sub{color:var(--muted);margin:0 0 20px}
+  h3{font-size:19px;margin:26px 0 8px} h4{font-size:16px;margin:18px 0 6px}
+  p{margin:0 0 14px} ul,ol{margin:0 0 16px;padding-left:22px} li{margin:6px 0}
+  strong{color:var(--text)} :root:not([data-theme]) strong, :root[data-theme="dark"] strong{color:#fff}
+  .callout{border:1px solid var(--border2);border-left-width:3px;border-radius:10px;
+    padding:13px 16px;margin:18px 0;background:var(--bg2);font-size:14.5px}
+  .callout .ct{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
+    margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .callout p:last-child{margin-bottom:0}
+  .callout.info{border-left-color:var(--blue)} .callout.info .ct{color:var(--blue)}
+  .callout.key{border-left-color:var(--accent)} .callout.key .ct{color:var(--accent)}
+  .callout.warn{border-left-color:var(--amber)} .callout.warn .ct{color:var(--amber)}
+  .callout.fail{border-left-color:var(--red)} .callout.fail .ct{color:var(--red)}
+  .callout.cost{border-left-color:var(--violet)} .callout.cost .ct{color:var(--violet)}
+  figure.code{margin:18px 0;border:1px solid var(--border2);border-radius:12px;
+    overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px}
+  .chip{font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:6px;
+    text-transform:uppercase}
+  .chip.raw{background:rgba(245,176,86,.15);color:var(--amber);border:1px solid rgba(245,176,86,.3)}
+  .chip.lc{background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3)}
+  .chip.run{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .chip.prompt{background:rgba(121,192,255,.13);color:var(--blue);border:1px solid rgba(121,192,255,.3)}
+  .fname{color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  figure.code .copy{margin-left:auto;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border2);border-radius:7px;padding:4px 10px;font-size:12px;
+    cursor:pointer;font-family:var(--sans)}
+  figure.code .copy:hover{color:var(--text);border-color:var(--accent-d)}
+  figure.code pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6}
+  figure.code code{font-family:var(--mono);white-space:pre}
+  :not(pre)>code{font-family:var(--mono);font-size:.9em;background:var(--panel2);
+    border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--code-inline-fg)}
+  .t-kw{color:var(--c-kw)} .t-str{color:var(--c-str)} .t-com{color:var(--c-com);font-style:italic}
+  .t-num{color:var(--c-num)} .t-fn{color:var(--c-fn)} .t-call{color:var(--c-call)}
+  .t-blt{color:var(--c-blt)} .t-dec{color:var(--c-dec)}
+  .response{border:1px solid var(--border2);border-radius:12px;margin:18px 0;overflow:hidden}
+  .response .rhead{background:var(--panel2);padding:8px 14px;font-size:12.5px;font-weight:600;
+    color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .response .rhead::before{content:"▍";color:var(--accent)}
+  .response.bad .rhead::before{color:var(--red)} .response.good .rhead::before{color:var(--green)}
+  .response .rbody{padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;
+    white-space:pre-wrap;color:var(--code-fg);background:var(--code-bg)}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);color:var(--text);font-weight:600}
+  td{color:var(--muted)} td strong{color:var(--text)}
+  .tryit{border:1px dashed var(--border2);border-radius:12px;padding:18px 20px;
+    background:linear-gradient(180deg,rgba(45,212,191,.04),transparent);margin:22px 0}
+  .tryit h3{margin-top:0;color:var(--accent)}
+  .pager{display:flex;justify-content:space-between;gap:14px;padding:30px 0 60px}
+  .pager a{flex:1;border:1px solid var(--border);border-radius:12px;padding:14px 18px;background:var(--panel)}
+  .pager a:hover{border-color:var(--accent-d);text-decoration:none}
+  .pager .dir{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .pager .ttl{color:var(--text);font-weight:600;margin-top:2px}
+  .pager a.next{text-align:right} .pager a.disabled{opacity:.4;pointer-events:none}
+  footer{padding:30px 0;color:var(--faint);font-size:13px;text-align:center}
+  .kbd{font-family:var(--mono);font-size:.85em;background:var(--panel2);border:1px solid var(--border2);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  hr.soft{border:none;border-top:1px solid var(--border);margin:26px 0}
+  .lhead{padding:46px 0 26px;border-bottom:1px solid var(--border)}
+  .crumb{font-size:13px;color:var(--faint);margin-bottom:14px} .crumb a{color:var(--muted)}
+  .lhead h1{font-size:36px;line-height:1.12;margin:0 0 12px;letter-spacing:-.4px}
+  .lhead p.lead{font-size:18px;color:var(--muted);max-width:680px;margin:0 0 18px}
+  .meta-badges{display:flex;gap:9px;flex-wrap:wrap}
+  .mb{font-size:12.5px;border:1px solid var(--border2);color:var(--muted);
+    padding:4px 10px;border-radius:999px;background:var(--bg2)} .mb b{color:var(--accent)}
+  .toc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:22px 0}
+  .toc ol{margin:6px 0 0;padding-left:20px} .toc li{margin:3px 0;color:var(--muted)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:20px 0;font-size:13px}
+  .flow .node{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;
+    padding:8px 12px;font-weight:600}
+  .flow .node small{display:block;color:var(--faint);font-weight:400;font-size:11px}
+  .flow .arr{color:var(--accent);font-weight:700}
+  .flow .loop{color:var(--violet);font-weight:700}
+  @media(max-width:600px){.lhead h1{font-size:28px}.navlinks{display:none}.themebtn{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap row">
+  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <nav class="navlinks">
+    <a href="../index.html">Home</a>
+    <a href="#chain">The pipeline</a>
+    <a href="#refine">Self-refine</a>
+    <a href="#fail">Failure modes</a>
+    <a href="#langchain">LCEL</a>
+  </nav>
+  <button class="themebtn" id="themeToggle" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">🌙</button>
+</div></div>
+
+<div class="wrap">
+  <header class="lhead">
+    <div class="crumb"><a href="../index.html">Prompting Lab</a> &nbsp;/&nbsp; Lesson 5</div>
+    <h1>Prompt chaining &amp; self-refine</h1>
+    <p class="lead">We've built the pieces — a router (L2), a persona (L3), reasoning (L4). Now we stop
+      cramming everything into one call and wire them into a <em>pipeline</em>: classify → route → draft →
+      critique → refine. This is the real shape of a support agent, and where the framework finally earns
+      its keep.</p>
+    <div class="meta-badges">
+      <span class="mb">⏱ <b>~30 min</b></span>
+      <span class="mb">🎓 level: <b>intermediate</b></span>
+      <span class="mb">🧠 technique: <b>prompt chaining + self-refine</b></span>
+      <span class="mb">🧩 builds: <b>the support pipeline</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="toc">
+      <strong>In this lesson</strong>
+      <ol>
+        <li><a href="#why">One mega-prompt vs. a chain of focused calls</a></li>
+        <li><a href="#chain">Build the pipeline: classify → route → draft (raw)</a></li>
+        <li><a href="#refine">Self-refine: critique → improve loop</a></li>
+        <li><a href="#together">Putting it together: <code>handle()</code></a></li>
+        <li><a href="#fail">Failure modes: cascades, latency, oscillation</a></li>
+        <li><a href="#cost">Cost, latency &amp; reliability</a></li>
+        <li><a href="#langchain">LangChain: LCEL (and where you outgrow it)</a></li>
+        <li><a href="#tradeoffs">Trade-offs &amp; try / modify</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 1 WHY -->
+  <section id="why">
+    <h2>1 · One mega-prompt vs. a chain</h2>
+    <p class="sub">You could ask one giant prompt to "classify, then route, then write a perfect reply,
+      then check it." You shouldn't.</p>
+    <p>A single prompt juggling many instructions is the brittle option: it's hard to debug (which
+      instruction did it drop?), you can't use a cheap model for the easy parts, and you get no
+      inspection points between steps. <strong>Prompt chaining</strong> breaks the task into a sequence
+      of focused calls, each doing one thing and passing its output forward.</p>
+    <div class="flow">
+      <span class="node">classify<small>L2 router</small></span><span class="arr">→</span>
+      <span class="node">route<small>pick handling</small></span><span class="arr">→</span>
+      <span class="node">draft<small>L3 persona</small></span><span class="arr">→</span>
+      <span class="node">critique<small>rubric check</small></span><span class="loop">⟲</span>
+      <span class="node">refine<small>fix &amp; repeat</small></span>
+    </div>
+    <p>Each stage is simpler and more reliable than the whole, individually testable, and free to use a
+      different model (cheap <code>flash-lite</code> to classify, capable <code>flash</code> to draft).
+      The trade-off — more calls, more latency, more cost — is the rest of this lesson.</p>
+    <div class="callout key"><div class="ct">✦ Chaining reuses everything you've built</div>
+      <p>This pipeline doesn't invent new prompts — it <em>orchestrates</em> the router from Lesson 2 and
+      the persona from Lesson 3 into stages. That's the point of building one coherent system: the parts
+      compose.</p>
+    </div>
+  </section>
+
+  <!-- 2 CHAIN -->
+  <section id="chain">
+    <h2>2 · Build the pipeline: classify → route → draft</h2>
+    <p class="sub">Three stages. The first is literally the Lesson 2 router, imported. The second is plain
+      Python. The third reuses the Lesson 3 persona.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">pipeline.py — stages 1–3</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from nimbus.llm import LLM
+from classify import classify              # Lesson 2 router (uses gemini-2.5-flash-lite)
+from system_prompt import NIMBUS_SYSTEM    # Lesson 3 persona
+
+drafter = LLM(model="gemini-2.5-flash")    # capable model for the customer-facing reply
+
+# Stage 2 is just a lookup: each intent maps to handling guidance for the drafter.
+ROUTES = {
+    "billing":      "Acknowledge warmly. Do NOT promise refunds; offer to escalate to a human billing agent.",
+    "cancellation": "Acknowledge. Mention they can pause or downgrade instead; offer to escalate to a human.",
+    "bug":          "Give concrete troubleshooting steps. Ask for OS, app version, and exact error if missing.",
+    "how_to":       "Give clear numbered steps.",
+    "other":        "Answer if it's in scope for Nimbus; otherwise politely decline.",
+}
+
+def draft(message: str, intent: str) -> str:
+    """Stage 3: write the reply, using the route's guidance + the Nimbus persona."""
+    guidance = ROUTES.get(intent, ROUTES["other"])
+    prompt = (f"Customer message (category: {intent}): {message}\n\n"
+              f"Handling guidance: {guidance}\n\n"
+              "Write the support reply now.")
+    return drafter.generate(prompt, system=NIMBUS_SYSTEM,
+                            temperature=0.4, max_output_tokens=250)
+
+# classify() + draft() already give us a routed, on-brand first draft:
+msg = "I was charged $10 twice this month and I'm really annoyed."
+intent = classify(msg)            # stage 1  -> "billing"
+first  = draft(msg, intent)       # stages 2+3
+print(intent, "\n\n", first)</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">billing
+
+I'm sorry about the double charge — I completely understand the frustration. I'm
+not able to issue refunds myself, but I can get this sorted: could you confirm
+the date of the duplicate $10 charge? I'll summarize it and escalate to a human
+billing agent who can review and process any refund. Thanks for your patience.</div>
+    </div>
+    <p>Notice what each stage contributed: <strong>classify</strong> picked <code>billing</code>,
+      <strong>route</strong> supplied the "don't promise refunds, escalate" guidance, and
+      <strong>draft</strong> rendered it in the Nimbus voice. Three small, debuggable steps instead of one
+      sprawling prompt. But is this draft actually good? Let's not assume — let's check it.</p>
+  </section>
+
+  <!-- 3 REFINE -->
+  <section id="refine">
+    <h2>3 · Self-refine: critique → improve</h2>
+    <p class="sub">A second model pass <em>critiques</em> the draft against a rubric, then a third
+      <em>rewrites</em> it. Critiquing is easier than generating, so a focused critic catches what the
+      drafter missed.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">pipeline.py — stages 4–5</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">critic = LLM(model="gemini-2.5-flash")
+
+RUBRIC = """Check the draft reply against these:
+1) Directly addresses the customer's message.
+2) Follows the handling guidance for its category.
+3) On-brand: friendly, concise, invents NO Nimbus specifics.
+4) Ends with a clear next step.
+Reply with exactly "PASS" if all hold, otherwise "FAIL: <one line on what to fix>"."""
+
+def critique(message: str, intent: str, reply: str) -> str:
+    """Stage 4: judge the draft. temperature=0 so the verdict is stable."""
+    prompt = (f"Customer (category: {intent}): {message}\n\n"
+              f"Draft reply:\n{reply}\n\n{RUBRIC}")
+    return critic.generate(prompt, temperature=0, max_output_tokens=80)
+
+def refine(message: str, intent: str, reply: str, feedback: str) -> str:
+    """Stage 5: rewrite the draft to address the critic's feedback."""
+    prompt = (f"Customer (category: {intent}): {message}\n\n"
+              f"Your previous draft:\n{reply}\n\n"
+              f"A reviewer said: {feedback}\n\n"
+              "Rewrite the reply to fix that. Reply with ONLY the improved message.")
+    return drafter.generate(prompt, system=NIMBUS_SYSTEM,
+                            temperature=0.4, max_output_tokens=250)</script>
+    </figure>
+    <p>The critic returns a machine-checkable verdict — <code>PASS</code> or
+      <code>FAIL: …</code> — which is what lets us drive a loop in code. Run it on a weaker draft:</p>
+    <div class="response bad"><div class="rhead">critique() on a draft that forgot to ask for the charge date</div>
+      <div class="rbody">FAIL: Doesn't ask for the specific charge date/details needed to escalate the billing issue.</div>
+    </div>
+    <div class="callout key"><div class="ct">✦ Why a separate critic beats "just write it well"</div>
+      <p>Asking one call to both write <em>and</em> self-check splits its attention. A dedicated critique
+      pass starts fresh, reads the draft as an outsider, and judges against an explicit rubric — so it
+      catches the missing next-step that the drafter, focused on tone, glossed over. Generation and
+      evaluation are different skills; give each its own call.</p>
+    </div>
+  </section>
+
+  <!-- 4 TOGETHER -->
+  <section id="together">
+    <h2>4 · Putting it together: <code>handle()</code></h2>
+    <p class="sub">Now the full chain, with the critique→refine loop bounded by a hard cap. Always cap the
+      loop — never let it run "until perfect".</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">pipeline.py — handle()</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">def handle(message: str, max_rounds: int = 2) -> dict:
+    """The full pipeline: classify -> route -> draft -> (critique -> refine)*"""
+    intent = classify(message)                 # stage 1
+    reply = draft(message, intent)             # stages 2-3
+
+    for r in range(max_rounds):                # stages 4-5, bounded loop
+        verdict = critique(message, intent, reply)
+        if verdict.strip().upper().startswith("PASS"):
+            return {"intent": intent, "reply": reply, "refines": r, "status": "passed"}
+        reply = refine(message, intent, reply, verdict)
+
+    return {"intent": intent, "reply": reply, "refines": max_rounds, "status": "max_rounds"}
+
+
+if __name__ == "__main__":
+    out = handle("Sync keeps stopping and I don't know why. Fix it.")
+    print(f"[{out['intent']}] refines={out['refines']} ({out['status']})\n")
+    print(out["reply"])
+    print("---")
+    print(drafter.usage.report(), "(drafter)")
+    print(critic.usage.report(), "(critic)")</script>
+    </figure>
+    <div class="response good"><div class="rhead">representative run</div>
+      <div class="rbody">[bug] refines=1 (passed)
+
+I'm sorry sync keeps stopping — let's fix it. Try these in order:
+1. Confirm you're online and signed in.
+2. Quit Nimbus fully and reopen it, then click Resume on the sync status.
+3. Check you still have free storage space.
+
+If it's still stopping, send me your operating system, your Nimbus app version,
+and the exact error text, and I'll take it from there.
+---
+2 calls | 520 in + 240 out tokens | ~$0.00076 (drafter)
+2 calls | 900 in + 40 out tokens  | ~$0.00037 (critic)</div>
+    </div>
+    <p>Round 1's draft skipped asking for the version/error; the critic caught it, and the refine pass
+      added it — then round 2 passed. The reply is the product of <strong>five calls across two models</strong>
+      (one cheap classify + two drafts + two critiques), each doing one job well.</p>
+  </section>
+
+  <!-- 5 FAILURE MODES -->
+  <section id="fail">
+    <h2>5 · Failure modes</h2>
+    <p class="sub">Chains multiply power — and multiply the ways things break.</p>
+    <table>
+      <thead><tr><th>Failure</th><th>What happens</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cascading errors</strong></td><td>A wrong <code>classify</code> routes everything downstream wrong — the polished reply answers the wrong question.</td><td>Validate between stages; the critic can catch off-category replies; fall back to a safe generic handler on low confidence.</td></tr>
+        <tr><td><strong>Latency stacking</strong></td><td>5 sequential calls = sum of 5 latencies; the user waits.</td><td>Parallelize independent stages; use fast models for simple ones; cap refine rounds.</td></tr>
+        <tr><td><strong>Cost multiplication</strong></td><td>One ticket now costs 5 calls instead of 1.</td><td>Cheapest model per stage; skip refine when the first draft passes; cache static prefixes.</td></tr>
+        <tr><td><strong>Refine oscillation</strong></td><td>The loop edits forever, gold-plates, or makes the reply <em>worse</em> chasing the rubric.</td><td>Hard <code>max_rounds</code> cap; stop on PASS; keep the best version, not the last.</td></tr>
+        <tr><td><strong>Mis-calibrated critic</strong></td><td>Critic rubber-stamps everything (always PASS) or never passes.</td><td>Concrete, testable rubric; evaluate the critic itself (Lesson 9).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><div class="ct">⚠ The cascade is the big one</div>
+      <p>In a chain, every stage trusts the one before it. A 90%-accurate classifier means 10% of tickets
+      are confidently mishandled end-to-end, no matter how good the later stages are. Reliability is
+      multiplicative — measure each stage (Lesson 9), and put cheap validation between them.</p>
+    </div>
+  </section>
+
+  <!-- 6 COST -->
+  <section id="cost">
+    <h2>6 · Cost, latency &amp; reliability</h2>
+    <p class="sub">Chaining trades calls for control. Know the exchange rate.</p>
+    <ul>
+      <li><strong>Cost:</strong> a chain costs the <em>sum</em> of its stages. Our pipeline is 1 cheap
+        classify + up to 2 drafts + up to 2 critiques. Keep it down by using the cheapest model per stage
+        and skipping refine when the first draft passes.</li>
+      <li><strong>Latency:</strong> sequential stages add up — the user waits for all of them. Stages with
+        no data dependency can run <em>in parallel</em> (e.g., classify and retrieval in Lesson 8). The
+        refine loop is inherently sequential, so cap it.</li>
+      <li><strong>Reliability:</strong> up, via inspection points, a dedicated critic, and small testable
+        steps — but watch the cascade. A chain is only as reliable as its weakest stage times all the rest.</li>
+    </ul>
+  </section>
+
+  <!-- 7 LANGCHAIN -->
+  <section id="langchain">
+    <h2>7 · LangChain: LCEL (and where you outgrow it)</h2>
+    <p class="sub">This is what LCEL — the <code>|</code> pipe composition — is <em>for</em>: wiring a
+      linear chain of steps into one runnable object.</p>
+    <figure class="code">
+      <figcaption><span class="chip lc">LangChain · LCEL</span><span class="fname">pipeline_lc.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from system_prompt import NIMBUS_SYSTEM
+from classify_lc import classify          # Lesson 2 LangChain router
+
+ROUTES = {
+    "billing":      "Acknowledge warmly. Do NOT promise refunds; offer to escalate to a human billing agent.",
+    "cancellation": "Acknowledge. Mention pause/downgrade; offer to escalate to a human.",
+    "bug":          "Give troubleshooting steps. Ask for OS, app version, and exact error if missing.",
+    "how_to":       "Give clear numbered steps.",
+    "other":        "Answer if in scope; otherwise politely decline.",
+}
+
+draft_prompt = ChatPromptTemplate.from_messages([
+    ("system", NIMBUS_SYSTEM),
+    ("human", "Customer message (category: {intent}): {message}\n\n"
+              "Handling guidance: {guidance}\n\nWrite the support reply now."),
+])
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.4, max_output_tokens=250)
+draft_chain = draft_prompt | llm | StrOutputParser()
+
+# Each .assign() adds a key to the dict flowing down the chain.
+pipeline = (
+    RunnablePassthrough.assign(intent=lambda x: classify(x["message"]))
+    | RunnablePassthrough.assign(guidance=lambda x: ROUTES.get(x["intent"], ROUTES["other"]))
+    | RunnablePassthrough.assign(reply=draft_chain)
+)
+
+if __name__ == "__main__":
+    out = pipeline.invoke({"message": "I was charged $10 twice and I'm annoyed."})
+    print(out["intent"], "\n\n", out["reply"])</script>
+    </figure>
+    <p>The linear spine — classify → attach guidance → draft — is three composable <code>Runnable</code>s
+      joined with <code>|</code>. That's LCEL at its best: declarative, streamable, and the same
+      <code>.invoke()</code> interface everywhere.</p>
+    <div class="callout info"><div class="ct">ℹ "Is LCEL the latest way?" — yes, for chains</div>
+      <p>In LangChain v1, <strong>LCEL (the <code>|</code> pipe / <code>Runnable</code> / <code>.invoke()</code>)
+      is current and recommended for linear composition</strong> — it was <em>not</em> deprecated. What got
+      retired into the <code>langchain-classic</code> package are the old class-based chains
+      (<code>LLMChain</code>, <code>SequentialChain</code>). The rule of thumb in v1:</p>
+      <p style="margin-top:8px"><strong>LCEL</strong> for linear chains → <strong><code>create_agent</code></strong>
+      for agents → <strong>LangGraph</strong> for stateful / branching / looping orchestration.</p>
+    </div>
+    <div class="callout warn"><div class="ct">⚠ Where LCEL stops: the refine loop</div>
+      <p>Notice we only built the linear part in LCEL. The <em>critique → refine</em> loop is a
+      <strong>conditional cycle</strong> ("if FAIL, go back; else stop") — and cyclic, stateful control
+      flow is exactly what LCEL doesn't express cleanly. That's the signal to reach for
+      <strong>LangGraph</strong>, which models nodes, conditional edges, and loops as a graph with state.
+      We build the agent loop properly with LangGraph in <strong>Lesson 7</strong>; here, a plain Python
+      <code>for</code> loop around the LCEL chain is the honest, simple choice.</p>
+    </div>
+  </section>
+
+  <!-- 8 TRADEOFFS + TRY -->
+  <section id="tradeoffs">
+    <h2>8 · Trade-offs &amp; try / modify</h2>
+    <table>
+      <thead><tr><th>Approach</th><th>Cost / latency</th><th>Reliability</th><th>Reach for it when…</th></tr></thead>
+      <tbody>
+        <tr><td><strong>One mega-prompt</strong></td><td>💚 1 call</td><td>🟠 Brittle, hard to debug</td><td>Simple, single-step tasks.</td></tr>
+        <tr><td><strong>Linear chain</strong></td><td>🟠 Sum of stages</td><td>💚 Modular, testable, inspectable</td><td>Multi-step tasks with clear stages (this pipeline).</td></tr>
+        <tr><td><strong>+ self-refine</strong></td><td>🔴 +2 calls/round</td><td>💚💚 Higher quality output</td><td>Quality matters and you can afford the loop. Always cap it.</td></tr>
+      </tbody>
+    </table>
+    <div class="tryit">
+      <h3>🛠 Try / modify this</h3>
+      <ol>
+        <li><strong>Watch the loop work.</strong> Run <code>handle()</code> on a vague message and print
+          the draft before and after refine. What did the critic catch?</li>
+        <li><strong>Cause a cascade.</strong> Hard-code <code>intent = "how_to"</code> for a billing
+          message and watch a fluent, well-refined — but wrong-category — reply come out. That's why stage
+          1 accuracy dominates.</li>
+        <li><strong>Tune the cap.</strong> Set <code>max_rounds=0</code> (no refine), then 1, then 3.
+          Where does quality stop improving? Each extra round is two more calls.</li>
+        <li><strong>Tighten the rubric.</strong> Add a 5th check ("must not exceed 90 words") and watch
+          refine fight to satisfy it — and occasionally over-trim. That's refine oscillation.</li>
+        <li><strong>Compare raw vs LCEL.</strong> Run <code>pipeline.py</code> and <code>pipeline_lc.py</code>
+          on the same message. Same result — decide which you'd rather maintain.</li>
+      </ol>
+    </div>
+    <div class="callout key"><div class="ct">✦ What you built</div>
+      <p>The Nimbus <strong>support pipeline</strong> — classify → route → draft → critique → refine —
+      orchestrating Lessons 2 and 3 into one flow, raw and in LCEL, with the failure modes (cascades,
+      latency, oscillation) and the LCEL-vs-LangGraph boundary made explicit.</p>
+    </div>
+    <p style="color:var(--muted)"><strong>Next — Lesson 6: Structured output &amp; tool use.</strong> Our
+      stages still pass fragile text and regex it apart. We'll make the model emit <em>schema-validated
+      JSON</em> (a real support ticket) and call <em>tools</em> (account/order lookup) — turning "parse
+      the prose" into "get a typed object".</p>
+  </section>
+
+  <nav class="pager">
+    <a class="prev" href="lesson-04-chain-of-thought.html">
+      <div class="dir">← Previous</div><div class="ttl">Lesson 4 · Chain-of-thought &amp; variants</div></a>
+    <a class="next" href="lesson-06-structured-output-tools.html">
+      <div class="dir">Next →</div><div class="ttl">Lesson 6 · Structured output &amp; tool use</div></a>
+  </nav>
+
+  <footer>
+    Prompting Lab · Lesson 5 of 10 · anchored to the Nimbus Support Agent.<br>
+    Code targets Python + the Google Gemini SDK (<code>google-genai</code>), contrasted with LangChain (LCEL).
+  </footer>
+</div>
+
+<script>
+/* ============ Shared scripts (identical across all lessons) ============ */
+(function(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  function hlPython(code){
+    const KW=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+    const BLT=new Set("print len range dict list set tuple str int float bool open enumerate zip map filter sum min max sorted reversed type isinstance issubclass super getattr setattr hasattr abs round repr input format vars dir id".split(" "));
+    const re=/([rbfuRBFU]{0,2})("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*)|([rbfuRBFU]{0,2})("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(@[A-Za-z_][\w.]*)|(\b\d[\w.]*\b)|([A-Za-z_]\w*)/g;
+    let out="",last=0,m,prev="";
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[2]!==undefined){ out+='<span class="t-str">'+esc((m[1]||"")+m[2])+'</span>'; prev=""; }
+      else if(m[3]!==undefined){ out+='<span class="t-com">'+esc(m[3])+'</span>'; prev=""; }
+      else if(m[5]!==undefined){ out+='<span class="t-str">'+esc((m[4]||"")+m[5])+'</span>'; prev=""; }
+      else if(m[6]!==undefined){ out+='<span class="t-dec">'+esc(m[6])+'</span>'; prev=""; }
+      else if(m[7]!==undefined){ out+='<span class="t-num">'+esc(m[7])+'</span>'; prev=""; }
+      else if(m[8]!==undefined){
+        const w=m[8], nxt=code[re.lastIndex];
+        if(KW.has(w)) out+='<span class="t-kw">'+esc(w)+'</span>';
+        else if(prev==="def"||prev==="class") out+='<span class="t-fn">'+esc(w)+'</span>';
+        else if(BLT.has(w)) out+='<span class="t-blt">'+esc(w)+'</span>';
+        else if(nxt==="(") out+='<span class="t-call">'+esc(w)+'</span>';
+        else out+=esc(w);
+        prev=w;
+      }
+    }
+    out+=esc(code.slice(last));
+    return out;
+  }
+
+  function hlBash(code){
+    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+  }
+
+  document.querySelectorAll("figure.code").forEach(fig=>{
+    const codeEl=fig.querySelector("code.render");
+    const src=fig.querySelector("script.src");
+    if(codeEl&&src){
+      let txt=src.textContent.replace(/^\n/,"").replace(/\s+$/,"");
+      const lang=codeEl.getAttribute("data-lang")||"python";
+      codeEl.innerHTML = lang==="bash" ? hlBash(txt) : hlPython(txt);
+      codeEl.dataset.raw=txt;
+    }
+    const btn=fig.querySelector(".copy");
+    if(btn){btn.addEventListener("click",()=>{
+      const raw=fig.querySelector("code.render")?.dataset.raw||"";
+      navigator.clipboard.writeText(raw).then(()=>{
+        const o=btn.textContent;btn.textContent="Copied ✓";
+        setTimeout(()=>btn.textContent=o,1200);
+      });
+    });}
+  });
+
+  // ---- theme toggle (default dark; choice persisted in localStorage) ----
+  var tb=document.getElementById("themeToggle");
+  function syncIcon(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(tb) tb.textContent = light ? "☀️" : "🌙";
+  }
+  syncIcon();
+  if(tb) tb.addEventListener("click",function(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(light) document.documentElement.removeAttribute("data-theme");
+    else      document.documentElement.setAttribute("data-theme","light");
+    try{ localStorage.setItem("plab-theme", light ? "dark" : "light"); }catch(e){}
+    syncIcon();
+  });
+})();
+</script>
+</body>
+</html>

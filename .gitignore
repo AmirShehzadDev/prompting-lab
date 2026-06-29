@@ -1,0 +1,19 @@
+# Local tooling / editors
+.claude/
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Secrets — never commit API keys
+.env
+*.key
+
+# OS
+.DS_Store
+Thumbs.db

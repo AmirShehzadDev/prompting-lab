@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 2 — Few-shot prompting</title>
+<script>/* set theme before paint to avoid a flash */(function(){try{if(localStorage.getItem('plab-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+  /* ============ Shared design system (identical across all lessons) ============ */
+  :root{
+    --bg:#0c0f14; --bg2:#11161d; --panel:#151b24; --panel2:#1b2330;
+    --border:#232c39; --border2:#2e3a4a;
+    --text:#e7eef6; --muted:#93a1b1; --faint:#6b7888;
+    --accent:#2dd4bf; --accent-d:#14b8a6; --amber:#f5b056; --violet:#a78bfa;
+    --red:#f87171; --green:#4ade80; --blue:#79c0ff;
+    --c-kw:#f97583; --c-str:#9ecbff; --c-com:#6b7888; --c-num:#f8c572;
+    --c-fn:#d2a8ff; --c-call:#79c0ff; --c-blt:#56d4bd; --c-dec:#f5b056;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    --code-bg:#0a0d12; --code-fg:#dce6f0; --code-inline-fg:#cfe7ff;
+    --topbar-bg:rgba(12,15,20,.82);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9fc; --bg2:#eef2f6; --panel:#ffffff; --panel2:#eef3f8;
+    --border:#dde4ec; --border2:#c6d0dd;
+    --text:#16202e; --muted:#52616f; --faint:#8492a2;
+    --accent:#0d9488; --accent-d:#0f766e; --amber:#b45309; --violet:#7c3aed;
+    --red:#dc2626; --green:#15803d; --blue:#1d4ed8;
+    --c-kw:#cf222e; --c-str:#0a3069; --c-com:#6e7781; --c-num:#0550ae;
+    --c-fn:#8250df; --c-call:#0969da; --c-blt:#1a7f37; --c-dec:#9a6700;
+    --code-bg:#f6f8fa; --code-fg:#1f2630; --code-inline-fg:#0550ae;
+    --topbar-bg:rgba(247,249,252,.85);
+  }
+  :root[data-theme="light"] body{ -webkit-font-smoothing:auto; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
+    color:#06121a;font-size:13px}
+  .navlinks{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .navlinks a{color:var(--muted)} .navlinks a:hover{color:var(--text);text-decoration:none}
+  .themebtn{margin-left:14px;background:var(--panel2);border:1px solid var(--border2);
+    color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px;
+    line-height:1;display:grid;place-items:center;flex:0 0 auto}
+  .themebtn:hover{border-color:var(--accent-d)}
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  section h2{font-size:25px;margin:0 0 6px;letter-spacing:-.3px}
+  section .sub{color:var(--muted);margin:0 0 20px}
+  h3{font-size:19px;margin:26px 0 8px} h4{font-size:16px;margin:18px 0 6px}
+  p{margin:0 0 14px} ul,ol{margin:0 0 16px;padding-left:22px} li{margin:6px 0}
+  strong{color:var(--text)} :root:not([data-theme]) strong, :root[data-theme="dark"] strong{color:#fff}
+  .callout{border:1px solid var(--border2);border-left-width:3px;border-radius:10px;
+    padding:13px 16px;margin:18px 0;background:var(--bg2);font-size:14.5px}
+  .callout .ct{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
+    margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .callout p:last-child{margin-bottom:0}
+  .callout.info{border-left-color:var(--blue)} .callout.info .ct{color:var(--blue)}
+  .callout.key{border-left-color:var(--accent)} .callout.key .ct{color:var(--accent)}
+  .callout.warn{border-left-color:var(--amber)} .callout.warn .ct{color:var(--amber)}
+  .callout.fail{border-left-color:var(--red)} .callout.fail .ct{color:var(--red)}
+  .callout.cost{border-left-color:var(--violet)} .callout.cost .ct{color:var(--violet)}
+  figure.code{margin:18px 0;border:1px solid var(--border2);border-radius:12px;
+    overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px}
+  .chip{font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:6px;
+    text-transform:uppercase}
+  .chip.raw{background:rgba(245,176,86,.15);color:var(--amber);border:1px solid rgba(245,176,86,.3)}
+  .chip.lc{background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3)}
+  .chip.run{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .fname{color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  figure.code .copy{margin-left:auto;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border2);border-radius:7px;padding:4px 10px;font-size:12px;
+    cursor:pointer;font-family:var(--sans)}
+  figure.code .copy:hover{color:var(--text);border-color:var(--accent-d)}
+  figure.code pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6}
+  figure.code code{font-family:var(--mono);white-space:pre}
+  :not(pre)>code{font-family:var(--mono);font-size:.9em;background:var(--panel2);
+    border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--code-inline-fg)}
+  .t-kw{color:var(--c-kw)} .t-str{color:var(--c-str)} .t-com{color:var(--c-com);font-style:italic}
+  .t-num{color:var(--c-num)} .t-fn{color:var(--c-fn)} .t-call{color:var(--c-call)}
+  .t-blt{color:var(--c-blt)} .t-dec{color:var(--c-dec)}
+  .response{border:1px solid var(--border2);border-radius:12px;margin:18px 0;overflow:hidden}
+  .response .rhead{background:var(--panel2);padding:8px 14px;font-size:12.5px;font-weight:600;
+    color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .response .rhead::before{content:"▍";color:var(--accent)}
+  .response .rbody{padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;
+    white-space:pre-wrap;color:var(--code-fg);background:var(--code-bg)}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);color:var(--text);font-weight:600}
+  td{color:var(--muted)} td strong{color:var(--text)}
+  .tryit{border:1px dashed var(--border2);border-radius:12px;padding:18px 20px;
+    background:linear-gradient(180deg,rgba(45,212,191,.04),transparent);margin:22px 0}
+  .tryit h3{margin-top:0;color:var(--accent)}
+  .pager{display:flex;justify-content:space-between;gap:14px;padding:30px 0 60px}
+  .pager a{flex:1;border:1px solid var(--border);border-radius:12px;padding:14px 18px;background:var(--panel)}
+  .pager a:hover{border-color:var(--accent-d);text-decoration:none}
+  .pager .dir{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .pager .ttl{color:var(--text);font-weight:600;margin-top:2px}
+  .pager a.next{text-align:right} .pager a.disabled{opacity:.4;pointer-events:none}
+  footer{padding:30px 0;color:var(--faint);font-size:13px;text-align:center}
+  .kbd{font-family:var(--mono);font-size:.85em;background:var(--panel2);border:1px solid var(--border2);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  hr.soft{border:none;border-top:1px solid var(--border);margin:26px 0}
+  .lhead{padding:46px 0 26px;border-bottom:1px solid var(--border)}
+  .crumb{font-size:13px;color:var(--faint);margin-bottom:14px} .crumb a{color:var(--muted)}
+  .lhead h1{font-size:36px;line-height:1.12;margin:0 0 12px;letter-spacing:-.4px}
+  .lhead p.lead{font-size:18px;color:var(--muted);max-width:680px;margin:0 0 18px}
+  .meta-badges{display:flex;gap:9px;flex-wrap:wrap}
+  .mb{font-size:12.5px;border:1px solid var(--border2);color:var(--muted);
+    padding:4px 10px;border-radius:999px;background:var(--bg2)} .mb b{color:var(--accent)}
+  .toc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:22px 0}
+  .toc ol{margin:6px 0 0;padding-left:20px} .toc li{margin:3px 0;color:var(--muted)}
+  @media(max-width:600px){.lhead h1{font-size:28px}.navlinks{display:none}.themebtn{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap row">
+  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <nav class="navlinks">
+    <a href="../index.html">Home</a>
+    <a href="#why">Why few-shot</a>
+    <a href="#build">Build it</a>
+    <a href="#eval">Does it help?</a>
+    <a href="#langchain">LangChain</a>
+  </nav>
+  <button class="themebtn" id="themeToggle" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">🌙</button>
+</div></div>
+
+<div class="wrap">
+  <header class="lhead">
+    <div class="crumb"><a href="../index.html">Prompting Lab</a> &nbsp;/&nbsp; Lesson 2</div>
+    <h1>Few-shot prompting</h1>
+    <p class="lead">Zero-shot gives you a plausible paragraph. But the first real job in our support
+      system is <em>routing</em> — turning each incoming message into one machine-readable label. For
+      that you need consistency, not eloquence. Few-shot prompting buys it for the price of a handful
+      of examples.</p>
+    <div class="meta-badges">
+      <span class="mb">⏱ <b>~25 min</b></span>
+      <span class="mb">🎓 level: <b>beginner</b></span>
+      <span class="mb">🧠 technique: <b>few-shot / in-context learning</b></span>
+      <span class="mb">🧩 builds: <b>the intent router</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="toc">
+      <strong>In this lesson</strong>
+      <ol>
+        <li><a href="#problem">The job: routing tickets — and why zero-shot struggles</a></li>
+        <li><a href="#why">What few-shot is, and why it works</a></li>
+        <li><a href="#build">Build the router from scratch (raw SDK)</a></li>
+        <li><a href="#eval">Does it actually help? A 60-second eval</a></li>
+        <li><a href="#fail">Failure modes</a></li>
+        <li><a href="#cost">Cost, latency &amp; the caching trick</a></li>
+        <li><a href="#langchain">The same thing in LangChain</a></li>
+        <li><a href="#tradeoffs">Trade-offs &amp; when to reach for few-shot</a></li>
+        <li><a href="#try">Try / modify this</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 1 PROBLEM -->
+  <section id="problem">
+    <h2>1 · The job: routing tickets</h2>
+    <p class="sub">A support agent's first decision is "what kind of message is this?" — so it can route
+      to the right team, template, or pipeline branch.</p>
+    <p>We need every Nimbus message sorted into exactly one of five labels:
+      <code>billing</code>, <code>bug</code>, <code>how_to</code>, <code>cancellation</code>,
+      <code>other</code>. The output has to be <strong>one of those exact strings</strong> — because the
+      next step in our code does <code>if label == "billing": …</code>. A nice paragraph is useless here.</p>
+    <p>Let's see what zero-shot (Lesson 1's technique) does with that constraint:</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">classify_zeroshot.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from nimbus.llm import LLM
+
+llm = LLM(model="gemini-2.5-flash-lite")   # cheap model; routing is a simple task
+
+def classify_zero(message: str) -> str:
+    return llm.generate(
+        "Classify this Nimbus support message as billing, bug, how_to, "
+        f"cancellation, or other:\n\n{message}",
+        temperature=0,
+        max_output_tokens=30,
+    ).strip()
+
+for m in ["I was charged twice this month!",
+          "The app crashes when I open a shared folder",
+          "How do I invite a teammate?"]:
+    print(repr(classify_zero(m)))</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">'This message is about billing.'
+'Bug'
+'how_to'</div>
+    </div>
+    <p>Three messages, <strong>three different output shapes</strong>: a full sentence, a capitalized
+      word with no match to our label set, and one that happens to be right. The model understood the
+      <em>task</em> fine — it just won't commit to a <em>format</em>. Your <code>if label == "billing"</code>
+      check breaks on the first row, and <code>"Bug" != "bug"</code> breaks on the second.</p>
+    <div class="callout fail"><div class="ct">✗ The core problem</div>
+      <p>Zero-shot can't read your mind about the output contract. You described the labels in words, but
+      "describe in words" leaves room for interpretation. We need to <em>show</em>, not tell.</p>
+    </div>
+  </section>
+
+  <!-- 2 WHY -->
+  <section id="why">
+    <h2>2 · What few-shot is, and why it works</h2>
+    <p class="sub">Stop describing the task. Demonstrate it.</p>
+    <p><strong>Few-shot prompting</strong> means putting a handful of worked examples
+      (input&nbsp;→&nbsp;correct output) into the prompt <em>before</em> the real input. The model reads
+      the pattern and continues it. That's it — no fine-tuning, no training, no weight changes. The
+      learning happens entirely inside the prompt at inference time, which is why it's also called
+      <strong>in-context learning</strong>.</p>
+    <h4>Why it works</h4>
+    <p>Language models are pattern-completers. When the prompt establishes a rhythm —
+      <span style="color:var(--muted)">message → label, message → label, message →</span> — the most
+      probable continuation is <em>another label in the same shape</em>. Examples do two jobs at once
+      that a written instruction does poorly:</p>
+    <ul>
+      <li><strong>They pin the output format.</strong> Five examples that all answer with a bare
+        lowercase label make "a bare lowercase label" overwhelmingly the likely next token.</li>
+      <li><strong>They disambiguate the task.</strong> A borderline case ("upgrade me to Pro and bill
+        me" → <code>billing</code>) teaches a boundary you'd struggle to phrase in a rule.</li>
+    </ul>
+    <h4>When to reach for it</h4>
+    <ul>
+      <li>You need a <strong>consistent, fixed output format</strong> (labels, tags, short structured text).</li>
+      <li>The task is <strong>easier to show than to describe</strong> (tone, style, edge cases).</li>
+      <li>Classification, extraction, formatting, or style-matching on a <strong>small label space</strong>.</li>
+    </ul>
+  </section>
+
+  <!-- 3 BUILD -->
+  <section id="build">
+    <h2>3 · Build the router from scratch</h2>
+    <p class="sub">We'll encode the examples as a fake conversation — alternating
+      <code>user</code> / <code>model</code> turns — then append the real message. This is the cleanest
+      form of few-shot, and it maps directly onto the LangChain version later.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">classify.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from google.genai import types
+from nimbus.llm import LLM
+
+LABELS = ["billing", "bug", "how_to", "cancellation", "other"]
+
+SYSTEM = (
+    "You are an intent classifier for Nimbus support messages.\n"
+    "Classify each message into exactly one of: "
+    "billing, bug, how_to, cancellation, other.\n"
+    "Reply with ONLY the label — no punctuation, no explanation."
+)
+
+# A few labelled demonstrations. These teach the task AND pin the output format.
+# Note the deliberate edge case (upgrade -> billing) and the balanced coverage.
+EXAMPLES = [
+    ("I was charged twice this month, can I get a refund?", "billing"),
+    ("The desktop app crashes every time I open a shared folder.", "bug"),
+    ("How do I move a file into a shared folder?", "how_to"),
+    ("I want to close my account and stop being billed.", "cancellation"),
+    ("Do you have an office in Berlin?", "other"),
+    ("Upgrade me to the Pro plan and bill my card.", "billing"),
+]
+
+def build_contents(message: str) -> list:
+    """Message-style few-shot: alternating user/model turns, then the real message.
+
+    Remember Lesson 1: the API is stateless, so these example turns are re-sent on
+    EVERY call. They are how the model 'sees' the pattern — not a saved conversation.
+    """
+    contents = []
+    for msg, label in EXAMPLES:
+        contents.append(types.Content(role="user",  parts=[types.Part.from_text(text=msg)]))
+        contents.append(types.Content(role="model", parts=[types.Part.from_text(text=label)]))
+    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=message)]))
+    return contents
+
+def normalize(raw: str) -> str:
+    """Never trust raw model text. Coerce to a known label or fall back to 'other'."""
+    label = raw.strip().lower()
+    return label if label in LABELS else "other"
+
+# flash-lite: simple, high-volume task -> use the cheapest model that works.
+llm = LLM(model="gemini-2.5-flash-lite")
+
+def classify(message: str) -> str:
+    raw = llm.generate(
+        build_contents(message),
+        system=SYSTEM,
+        temperature=0,        # deterministic: same message -> same label
+        max_output_tokens=8,  # a label is 1-3 tokens; cap hard to save cost + time
+    )
+    return normalize(raw)
+
+if __name__ == "__main__":
+    for m in ["My card got declined but I still see the charge.",
+              "Sync keeps failing with error code 0x83.",
+              "Where's the button to invite a teammate?"]:
+        print(f"{classify(m):13} <- {m}")
+    print("---")
+    print(llm.usage.report())</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">billing       <- My card got declined but I still see the charge.
+bug           <- Sync keeps failing with error code 0x83.
+how_to        <- Where's the button to invite a teammate?
+---
+3 calls | 396 in + 6 out tokens | ~$0.000042</div>
+    </div>
+    <p>Clean, lowercase, parseable labels — every time. Two details that matter:</p>
+    <ul>
+      <li><strong><code>temperature=0</code></strong> makes it deterministic. For a classifier you want
+        the same input to always produce the same label; creativity is the enemy here.</li>
+      <li><strong><code>normalize()</code></strong> is your seatbelt. Even a great prompt occasionally
+        returns something off-list; we coerce to a known label instead of trusting raw text. (Lesson 6
+        will make this guarantee structural with enums — but defensive parsing is always good hygiene.)</li>
+    </ul>
+    <div class="callout info"><div class="ct">ℹ Notice the token count</div>
+      <p>396 input tokens for 3 calls = ~132 per call, versus ~15 for the zero-shot version. That extra
+      ~117 tokens <em>is</em> the six examples, re-sent every single call. Few-shot trades input tokens
+      for reliability. Hold that thought for the cost section.</p>
+    </div>
+  </section>
+
+  <!-- 4 EVAL -->
+  <section id="eval">
+    <h2>4 · Does it actually help? A 60-second eval</h2>
+    <p class="sub">"It looks better" is not evidence. Even a tiny labelled set turns a vibe into a number —
+      this is the seed of the real evaluation we build in Lesson 9.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">eval_router.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from classify import classify, classify_zero, normalize  # the two routers + the coercer
+
+# A small golden set: messages with the label a human says is correct.
+TESTSET = [
+    ("Refund me for the double charge please",        "billing"),
+    ("App freezes whenever I upload a big file",       "bug"),
+    ("How can I restore a file I deleted?",            "how_to"),
+    ("Cancel my subscription effective today",         "cancellation"),
+    ("Are you hiring backend engineers?",              "other"),
+    ("Upgrade me to Pro and charge my card",           "billing"),
+]
+
+def accuracy(router) -> float:
+    # normalize BOTH so the comparison is fair (zero-shot needs the help to even parse).
+    hits = sum(normalize(router(msg)) == gold for msg, gold in TESTSET)
+    return hits / len(TESTSET)
+
+print(f"zero-shot accuracy: {accuracy(classify_zero):.0%}")
+print(f"few-shot  accuracy: {accuracy(classify):.0%}")</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">zero-shot accuracy: 67%
+few-shot  accuracy: 100%</div>
+    </div>
+    <p>On this set, few-shot fixes the two cases zero-shot fumbled — the borderline "upgrade + bill"
+      (correctly <code>billing</code>) and the formatting that broke parsing. The improvement is real and
+      measurable, and now you can <em>prove</em> a prompt change helped instead of hoping.</p>
+    <div class="callout warn"><div class="ct">⚠ Don't over-trust a 6-row eval</div>
+      <p>Six examples can't tell you the difference between 95% and 99% accuracy, and a lucky run can read
+      as "100%". This is a smoke test, not a benchmark. Lesson 9 builds a proper eval set, handles
+      non-determinism, and adds metrics beyond raw accuracy. For now: small evals beat no evals.</p>
+    </div>
+  </section>
+
+  <!-- 5 FAILURE MODES -->
+  <section id="fail">
+    <h2>5 · Failure modes</h2>
+    <p class="sub">Few-shot is reliable, not magic. The failures are specific and avoidable once you know them.</p>
+    <table>
+      <thead><tr><th>Failure</th><th>What happens</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Example imbalance</strong></td><td>If 4 of 6 examples are <code>billing</code>, the model over-predicts <code>billing</code> — it learns your distribution, not just the task.</td><td>Balance examples across labels; cover each class at least once.</td></tr>
+        <tr><td><strong>Order / recency bias</strong></td><td>The label of the <em>last</em> example can tug ambiguous inputs toward it.</td><td>Shuffle example order; don't end on the rarest class.</td></tr>
+        <tr><td><strong>Format drift</strong></td><td>Occasional stray punctuation, casing, or an explanation despite the examples.</td><td><code>temperature=0</code>, a firm "ONLY the label" instruction, and always <code>normalize()</code>.</td></tr>
+        <tr><td><strong>Out-of-distribution input</strong></td><td>A message unlike any example gets a confident but wrong label.</td><td>Keep an explicit <code>other</code> class; later, let it abstain / escalate (Lessons 6–7).</td></tr>
+        <tr><td><strong>Too many examples</strong></td><td>Past ~5–10, accuracy plateaus while cost and latency keep climbing.</td><td>Use the fewest examples that hit your accuracy target; measure (§4).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout fail"><div class="ct">✗ Subtle trap: label leakage</div>
+      <p>If your example <em>inputs</em> literally contain the label word ("This is a <em>billing</em>
+      question…"), the model learns to keyword-match instead of reason. Write examples that look like real
+      user messages — messy, indirect, label-word-free — or you'll measure the wrong skill.</p>
+    </div>
+  </section>
+
+  <!-- 6 COST -->
+  <section id="cost">
+    <h2>6 · Cost, latency &amp; the caching trick</h2>
+    <p class="sub">Few-shot's one real cost: those example tokens ride along on every single request.</p>
+    <p>Because the API is stateless, your six examples (~120 tokens) are sent on <em>every</em> call. At
+      Nimbus's imagined 50,000 tickets/day on <code>gemini-2.5-flash-lite</code> ($0.10 / 1M input):</p>
+    <table>
+      <thead><tr><th></th><th>Input tokens / call</th><th>Input cost / day (50k calls)</th></tr></thead>
+      <tbody>
+        <tr><td>Zero-shot</td><td>~15</td><td>~$0.075</td></tr>
+        <tr><td>Few-shot (6 examples)</td><td>~135</td><td>~$0.68</td></tr>
+      </tbody>
+    </table>
+    <p>Pennies here — but the <em>shape</em> matters: the cost is the example prefix × call volume, and it
+      grows every time you add an example. Two levers keep it down:</p>
+    <ul>
+      <li><strong>Use the cheapest model that passes your eval.</strong> Routing doesn't need
+        <code>flash</code>, let alone <code>pro</code>. We measured (§4) and <code>flash-lite</code> hit 100%.</li>
+      <li><strong>Cache the static prefix.</strong> The examples never change between calls — the perfect
+        case for <em>context caching</em>.</li>
+    </ul>
+    <div class="callout cost"><div class="ct">◆ Prompt / context caching</div>
+      <p>Gemini can reuse a repeated prompt prefix instead of re-charging full price for it. <strong>Implicit
+      caching</strong> applies an automatic discount when consecutive requests share a long prefix;
+      <strong>explicit caching</strong> (<code>client.caches.create(...)</code>) lets you register the
+      example block once and reference it cheaply. For a high-volume classifier with a fixed example set,
+      this is the standard production move. (Caches have a minimum token size and a TTL — worth it at
+      scale, overkill for a demo.)</p>
+    </div>
+    <p><strong>Latency:</strong> a longer prompt adds a little input-processing time, but the output is a
+      1–3 token label, so few-shot routing stays fast. Output length, not example count, dominates latency.</p>
+  </section>
+
+  <!-- 7 LANGCHAIN -->
+  <section id="langchain">
+    <h2>7 · The same thing in LangChain</h2>
+    <p class="sub">LangChain has a purpose-built object for exactly this:
+      <code>FewShotChatMessagePromptTemplate</code>.</p>
+    <p>Instead of hand-building the alternating <code>user</code>/<code>model</code> turns, you declare an
+      example shape once and hand LangChain the list. The examples expand into chat turns for you, and the
+      whole thing composes into an LCEL chain (<code>prompt | llm | parser</code>).</p>
+    <figure class="code">
+      <figcaption><span class="chip lc">LangChain</span><span class="fname">classify_lc.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import FewShotChatMessagePromptTemplate, ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+LABELS = {"billing", "bug", "how_to", "cancellation", "other"}
+
+examples = [
+    {"input": "I was charged twice this month, can I get a refund?", "output": "billing"},
+    {"input": "The desktop app crashes every time I open a shared folder.", "output": "bug"},
+    {"input": "How do I move a file into a shared folder?", "output": "how_to"},
+    {"input": "I want to close my account and stop being billed.", "output": "cancellation"},
+    {"input": "Do you have an office in Berlin?", "output": "other"},
+    {"input": "Upgrade me to the Pro plan and bill my card.", "output": "billing"},
+]
+
+# Shape of ONE example: a human turn followed by the ai (model) answer.
+example_prompt = ChatPromptTemplate.from_messages([("human", "{input}"), ("ai", "{output}")])
+
+# This expands `examples` into alternating human/ai turns automatically.
+few_shot = FewShotChatMessagePromptTemplate(examples=examples, example_prompt=example_prompt)
+
+final_prompt = ChatPromptTemplate.from_messages([
+    ("system", "Classify the Nimbus support message into exactly one label: "
+               "billing, bug, how_to, cancellation, or other. Reply with ONLY the label."),
+    few_shot,
+    ("human", "{input}"),
+])
+
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0, max_output_tokens=8)
+chain = final_prompt | llm | StrOutputParser()      # prompt -> model -> plain string
+
+def classify(message: str) -> str:
+    raw = chain.invoke({"input": message}).strip().lower()
+    return raw if raw in LABELS else "other"
+
+if __name__ == "__main__":
+    for m in ["My card got declined but I still see the charge.",
+              "Sync keeps failing with error code 0x83."]:
+        print(classify(m), "<-", m)</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">billing <- My card got declined but I still see the charge.
+bug <- Sync keeps failing with error code 0x83.</div>
+    </div>
+    <h4>What did the framework do for us?</h4>
+    <table>
+      <thead><tr><th>Concern</th><th>Raw SDK</th><th>LangChain</th></tr></thead>
+      <tbody>
+        <tr><td>Building example turns</td><td>We loop and create <code>Content</code> objects</td><td><code>FewShotChatMessagePromptTemplate</code> expands them</td></tr>
+        <tr><td>Templating the input</td><td>String building by hand</td><td><code>{input}</code> placeholder in a reusable prompt</td></tr>
+        <tr><td>Output handling</td><td>We read <code>resp.text</code></td><td><code>StrOutputParser</code> in the chain</td></tr>
+        <tr><td>Picking examples</td><td>Static list (you choose)</td><td>Static <em>or</em> a dynamic <code>ExampleSelector</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout info"><div class="ct">ℹ The feature worth knowing: dynamic example selection</div>
+      <p>With a large, diverse example pool, sending all of them is wasteful and can hurt. LangChain's
+      <code>SemanticSimilarityExampleSelector</code> embeds your pool and, per request, picks the few
+      examples most similar to the incoming message. That's few-shot + retrieval — and it's a direct
+      preview of <strong>Lesson 8 (RAG)</strong>, where we build embeddings and similarity search from
+      scratch. For a fixed 6-example router, the static list is simpler and cheaper.</p>
+    </div>
+  </section>
+
+  <!-- 8 TRADEOFFS -->
+  <section id="tradeoffs">
+    <h2>8 · Trade-offs: when to reach for few-shot</h2>
+    <table>
+      <thead><tr><th>Dimension</th><th>Few-shot</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cost</strong></td><td>🟠 Higher than zero-shot — examples are re-sent every call. Mitigate with a cheap model + context caching.</td></tr>
+        <tr><td><strong>Latency</strong></td><td>💚 Still fast for short outputs; the extra input tokens add little.</td></tr>
+        <tr><td><strong>Reliability</strong></td><td>💚 Big jump over zero-shot for format + edge-case consistency.</td></tr>
+        <tr><td><strong>Reach for it when…</strong></td><td>You need a consistent format/label, the task is easier shown than described, and the label space is small.</td></tr>
+        <tr><td><strong>Reach for something else when…</strong></td><td>You need a <em>hard</em> output guarantee (→ structured output / enums, Lesson 6), the example pool is huge (→ dynamic selection / RAG, Lesson 8), or the task needs multi-step reasoning (→ CoT, Lesson 4).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout key"><div class="ct">✦ Where this fits in the agent</div>
+      <p>You just built the <strong>router</strong> — the first stage of the Nimbus pipeline. In Lesson 5
+      we'll chain it: classify → route to the right handler → draft → self-check. Keep <code>classify()</code>;
+      we'll import it.</p>
+    </div>
+  </section>
+
+  <!-- 9 TRY IT -->
+  <section id="try">
+    <div class="tryit">
+      <h3>🛠 Try / modify this</h3>
+      <ol>
+        <li><strong>Break it on purpose.</strong> Delete the <code>cancellation</code> example, then
+          classify "I'd like to terminate my plan." Watch it mislabel — proof that examples define the
+          reachable label space.</li>
+        <li><strong>Find the floor.</strong> Drop from 6 examples to 2, then 1, re-running
+          <code>eval_router.py</code> each time. How few can you keep before accuracy falls? That's your
+          cost/reliability sweet spot.</li>
+        <li><strong>Test recency bias.</strong> Move the single <code>other</code> example to the very end
+          of <code>EXAMPLES</code> and re-run on borderline inputs. Did anything drift toward
+          <code>other</code>?</li>
+        <li><strong>Swap the model.</strong> Change <code>flash-lite</code> → <code>flash</code> and
+          compare accuracy <em>and</em> <code>llm.usage.report()</code>. Is the pricier model worth it for
+          this task? (Usually: no.)</li>
+        <li><strong>Add a label.</strong> Introduce <code>feedback</code> (feature requests/praise), add
+          one example, extend the test set, and re-measure. This is how you grow a classifier safely.</li>
+      </ol>
+    </div>
+    <div class="callout key"><div class="ct">✦ What you built</div>
+      <p>A deterministic intent <strong>router</strong> for Nimbus — few-shot from scratch and in LangChain —
+      plus a tiny eval that proves it beats zero-shot, and a clear-eyed view of the failure modes and the
+      token cost of examples.</p>
+    </div>
+    <p style="color:var(--muted)"><strong>Next — Lesson 3: Role &amp; system prompting.</strong> We give
+      the agent a persona, a tone, and guardrails that actually hold — so its <em>answers</em> (not just
+      its labels) sound like Nimbus and refuse what they should.</p>
+  </section>
+
+  <nav class="pager">
+    <a class="prev" href="lesson-01-foundations.html">
+      <div class="dir">← Previous</div><div class="ttl">Lesson 1 · Foundations &amp; zero-shot</div></a>
+    <a class="next" href="lesson-03-system-prompting.html">
+      <div class="dir">Next →</div><div class="ttl">Lesson 3 · Role &amp; system prompting</div></a>
+  </nav>
+
+  <footer>
+    Prompting Lab · Lesson 2 of 10 · anchored to the Nimbus Support Agent.<br>
+    Code targets Python + the Google Gemini SDK (<code>google-genai</code>), contrasted with LangChain.
+  </footer>
+</div>
+
+<script>
+/* ============ Shared scripts (identical across all lessons) ============ */
+(function(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  function hlPython(code){
+    const KW=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+    const BLT=new Set("print len range dict list set tuple str int float bool open enumerate zip map filter sum min max sorted reversed type isinstance issubclass super getattr setattr hasattr abs round repr input format vars dir id".split(" "));
+    const re=/([rbfuRBFU]{0,2})("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*)|([rbfuRBFU]{0,2})("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(@[A-Za-z_][\w.]*)|(\b\d[\w.]*\b)|([A-Za-z_]\w*)/g;
+    let out="",last=0,m,prev="";
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[2]!==undefined){ out+='<span class="t-str">'+esc((m[1]||"")+m[2])+'</span>'; prev=""; }
+      else if(m[3]!==undefined){ out+='<span class="t-com">'+esc(m[3])+'</span>'; prev=""; }
+      else if(m[5]!==undefined){ out+='<span class="t-str">'+esc((m[4]||"")+m[5])+'</span>'; prev=""; }
+      else if(m[6]!==undefined){ out+='<span class="t-dec">'+esc(m[6])+'</span>'; prev=""; }
+      else if(m[7]!==undefined){ out+='<span class="t-num">'+esc(m[7])+'</span>'; prev=""; }
+      else if(m[8]!==undefined){
+        const w=m[8], nxt=code[re.lastIndex];
+        if(KW.has(w)) out+='<span class="t-kw">'+esc(w)+'</span>';
+        else if(prev==="def"||prev==="class") out+='<span class="t-fn">'+esc(w)+'</span>';
+        else if(BLT.has(w)) out+='<span class="t-blt">'+esc(w)+'</span>';
+        else if(nxt==="(") out+='<span class="t-call">'+esc(w)+'</span>';
+        else out+=esc(w);
+        prev=w;
+      }
+    }
+    out+=esc(code.slice(last));
+    return out;
+  }
+
+  function hlBash(code){
+    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+  }
+
+  document.querySelectorAll("figure.code").forEach(fig=>{
+    const codeEl=fig.querySelector("code.render");
+    const src=fig.querySelector("script.src");
+    if(codeEl&&src){
+      let txt=src.textContent.replace(/^\n/,"").replace(/\s+$/,"");
+      const lang=codeEl.getAttribute("data-lang")||"python";
+      codeEl.innerHTML = lang==="bash" ? hlBash(txt) : hlPython(txt);
+      codeEl.dataset.raw=txt;
+    }
+    const btn=fig.querySelector(".copy");
+    if(btn){btn.addEventListener("click",()=>{
+      const raw=fig.querySelector("code.render")?.dataset.raw||"";
+      navigator.clipboard.writeText(raw).then(()=>{
+        const o=btn.textContent;btn.textContent="Copied ✓";
+        setTimeout(()=>btn.textContent=o,1200);
+      });
+    });}
+  });
+
+  // ---- theme toggle (default dark; choice persisted in localStorage) ----
+  var tb=document.getElementById("themeToggle");
+  function syncIcon(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(tb) tb.textContent = light ? "☀️" : "🌙";
+  }
+  syncIcon();
+  if(tb) tb.addEventListener("click",function(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(light) document.documentElement.removeAttribute("data-theme");
+    else      document.documentElement.setAttribute("data-theme","light");
+    try{ localStorage.setItem("plab-theme", light ? "dark" : "light"); }catch(e){}
+    syncIcon();
+  });
+})();
+</script>
+</body>
+</html>

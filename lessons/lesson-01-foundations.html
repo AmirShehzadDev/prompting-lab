@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1 — Foundations &amp; your first prompt</title>
+<script>/* set theme before paint to avoid a flash */(function(){try{if(localStorage.getItem('plab-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+  /* ============ Shared design system (identical across all lessons) ============ */
+  :root{
+    --bg:#0c0f14; --bg2:#11161d; --panel:#151b24; --panel2:#1b2330;
+    --border:#232c39; --border2:#2e3a4a;
+    --text:#e7eef6; --muted:#93a1b1; --faint:#6b7888;
+    --accent:#2dd4bf; --accent-d:#14b8a6; --amber:#f5b056; --violet:#a78bfa;
+    --red:#f87171; --green:#4ade80; --blue:#79c0ff;
+    --c-kw:#f97583; --c-str:#9ecbff; --c-com:#6b7888; --c-num:#f8c572;
+    --c-fn:#d2a8ff; --c-call:#79c0ff; --c-blt:#56d4bd; --c-dec:#f5b056;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    --code-bg:#0a0d12; --code-fg:#dce6f0; --code-inline-fg:#cfe7ff;
+    --topbar-bg:rgba(12,15,20,.82);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9fc; --bg2:#eef2f6; --panel:#ffffff; --panel2:#eef3f8;
+    --border:#dde4ec; --border2:#c6d0dd;
+    --text:#16202e; --muted:#52616f; --faint:#8492a2;
+    --accent:#0d9488; --accent-d:#0f766e; --amber:#b45309; --violet:#7c3aed;
+    --red:#dc2626; --green:#15803d; --blue:#1d4ed8;
+    --c-kw:#cf222e; --c-str:#0a3069; --c-com:#6e7781; --c-num:#0550ae;
+    --c-fn:#8250df; --c-call:#0969da; --c-blt:#1a7f37; --c-dec:#9a6700;
+    --code-bg:#f6f8fa; --code-fg:#1f2630; --code-inline-fg:#0550ae;
+    --topbar-bg:rgba(247,249,252,.85);
+  }
+  :root[data-theme="light"] body{ -webkit-font-smoothing:auto; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .topbar .row{display:flex;align-items:center;gap:18px;height:56px}
+  .brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+  .brand .logo{width:22px;height:22px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:6px;
+    color:#06121a;font-size:13px}
+  .navlinks{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .navlinks a{color:var(--muted)} .navlinks a:hover{color:var(--text);text-decoration:none}
+  .themebtn{margin-left:14px;background:var(--panel2);border:1px solid var(--border2);
+    color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px;
+    line-height:1;display:grid;place-items:center;flex:0 0 auto}
+  .themebtn:hover{border-color:var(--accent-d)}
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  section h2{font-size:25px;margin:0 0 6px;letter-spacing:-.3px}
+  section .sub{color:var(--muted);margin:0 0 20px}
+  h3{font-size:19px;margin:26px 0 8px} h4{font-size:16px;margin:18px 0 6px}
+  p{margin:0 0 14px} ul,ol{margin:0 0 16px;padding-left:22px} li{margin:6px 0}
+  strong{color:#fff}
+  .callout{border:1px solid var(--border2);border-left-width:3px;border-radius:10px;
+    padding:13px 16px;margin:18px 0;background:var(--bg2);font-size:14.5px}
+  .callout .ct{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
+    margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .callout p:last-child{margin-bottom:0}
+  .callout.info{border-left-color:var(--blue)} .callout.info .ct{color:var(--blue)}
+  .callout.key{border-left-color:var(--accent)} .callout.key .ct{color:var(--accent)}
+  .callout.warn{border-left-color:var(--amber)} .callout.warn .ct{color:var(--amber)}
+  .callout.fail{border-left-color:var(--red)} .callout.fail .ct{color:var(--red)}
+  .callout.cost{border-left-color:var(--violet)} .callout.cost .ct{color:var(--violet)}
+  figure.code{margin:18px 0;border:1px solid var(--border2);border-radius:12px;
+    overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px}
+  .chip{font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:6px;
+    text-transform:uppercase}
+  .chip.raw{background:rgba(245,176,86,.15);color:var(--amber);border:1px solid rgba(245,176,86,.3)}
+  .chip.lc{background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3)}
+  .chip.run{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .fname{color:var(--muted);font-family:var(--mono);font-size:12.5px}
+  figure.code .copy{margin-left:auto;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border2);border-radius:7px;padding:4px 10px;font-size:12px;
+    cursor:pointer;font-family:var(--sans)}
+  figure.code .copy:hover{color:var(--text);border-color:var(--accent-d)}
+  figure.code pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6}
+  figure.code code{font-family:var(--mono);white-space:pre}
+  :not(pre)>code{font-family:var(--mono);font-size:.9em;background:var(--panel2);
+    border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--code-inline-fg)}
+  .t-kw{color:var(--c-kw)} .t-str{color:var(--c-str)} .t-com{color:var(--c-com);font-style:italic}
+  .t-num{color:var(--c-num)} .t-fn{color:var(--c-fn)} .t-call{color:var(--c-call)}
+  .t-blt{color:var(--c-blt)} .t-dec{color:var(--c-dec)}
+  .response{border:1px solid var(--border2);border-radius:12px;margin:18px 0;overflow:hidden}
+  .response .rhead{background:var(--panel2);padding:8px 14px;font-size:12.5px;font-weight:600;
+    color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .response .rhead::before{content:"▍";color:var(--accent)}
+  .response .rbody{padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;
+    white-space:pre-wrap;color:var(--code-fg);background:var(--code-bg)}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);color:var(--text);font-weight:600}
+  td{color:var(--muted)} td strong{color:var(--text)}
+  .tryit{border:1px dashed var(--border2);border-radius:12px;padding:18px 20px;
+    background:linear-gradient(180deg,rgba(45,212,191,.04),transparent);margin:22px 0}
+  .tryit h3{margin-top:0;color:var(--accent)}
+  .pager{display:flex;justify-content:space-between;gap:14px;padding:30px 0 60px}
+  .pager a{flex:1;border:1px solid var(--border);border-radius:12px;padding:14px 18px;background:var(--panel)}
+  .pager a:hover{border-color:var(--accent-d);text-decoration:none}
+  .pager .dir{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .pager .ttl{color:var(--text);font-weight:600;margin-top:2px}
+  .pager a.next{text-align:right} .pager a.disabled{opacity:.4;pointer-events:none}
+  footer{padding:30px 0;color:var(--faint);font-size:13px;text-align:center}
+  .kbd{font-family:var(--mono);font-size:.85em;background:var(--panel2);border:1px solid var(--border2);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  hr.soft{border:none;border-top:1px solid var(--border);margin:26px 0}
+  /* lesson-only */
+  .lhead{padding:46px 0 26px;border-bottom:1px solid var(--border)}
+  .crumb{font-size:13px;color:var(--faint);margin-bottom:14px}
+  .crumb a{color:var(--muted)}
+  .lhead h1{font-size:36px;line-height:1.12;margin:0 0 12px;letter-spacing:-.4px}
+  .lhead p.lead{font-size:18px;color:var(--muted);max-width:680px;margin:0 0 18px}
+  .meta-badges{display:flex;gap:9px;flex-wrap:wrap}
+  .mb{font-size:12.5px;border:1px solid var(--border2);color:var(--muted);
+    padding:4px 10px;border-radius:999px;background:var(--bg2)}
+  .mb b{color:var(--accent)}
+  .toc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:22px 0}
+  .toc ol{margin:6px 0 0;padding-left:20px} .toc li{margin:3px 0;color:var(--muted)}
+  .anat{margin:20px 0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px}
+  .anat svg{width:100%;height:auto;display:block}
+  .svgbox{fill:var(--panel2);stroke:var(--border2)} .svgbox2{fill:var(--code-bg);stroke:var(--border2)}
+  .svgmodel{fill:rgba(45,212,191,.12);stroke:var(--accent-d)}
+  .svgt{fill:var(--text);font-family:var(--sans);font-size:13px}
+  .svgm{fill:var(--muted);font-family:var(--mono);font-size:11px}
+  .svgmono{fill:var(--blue);font-family:var(--mono);font-size:11px}
+  .svgarrow{stroke:var(--accent);stroke-width:2;fill:none;marker-end:url(#ah)}
+  @media(max-width:600px){.lhead h1{font-size:28px}.navlinks{display:none}.themebtn{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap row">
+  <span class="brand"><span class="logo">☁</span> Prompting Lab</span>
+  <nav class="navlinks">
+    <a href="../index.html">Home</a>
+    <a href="#mental">Mental model</a>
+    <a href="#wrapper">llm.py</a>
+    <a href="#zeroshot">Zero-shot</a>
+    <a href="#langchain">LangChain</a>
+  </nav>
+  <button class="themebtn" id="themeToggle" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">🌙</button>
+</div></div>
+
+<div class="wrap">
+  <header class="lhead">
+    <div class="crumb"><a href="../index.html">Prompting Lab</a> &nbsp;/&nbsp; Lesson 1</div>
+    <h1>Foundations &amp; your first prompt</h1>
+    <p class="lead">Before any clever technique, you need the boring-but-critical basics: what an
+      API call <em>is</em>, what tokens cost, why output isn't repeatable, and how to not crash when
+      the network hiccups. We'll build the <code>llm.py</code> wrapper the whole course reuses — then
+      meet our first technique, <strong>zero-shot prompting</strong>.</p>
+    <div class="meta-badges">
+      <span class="mb">⏱ <b>~25 min</b></span>
+      <span class="mb">🎓 level: <b>beginner</b></span>
+      <span class="mb">🧠 technique: <b>zero-shot</b></span>
+      <span class="mb">🧩 builds: <b>nimbus/llm.py</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="toc">
+      <strong>In this lesson</strong>
+      <ol>
+        <li><a href="#mental">The mental model: what an LLM API call actually is</a></li>
+        <li><a href="#first">Your first call (the smoke test)</a></li>
+        <li><a href="#tokens">Tokens, cost &amp; latency — the budget you're spending</a></li>
+        <li><a href="#constraints">The four real constraints</a></li>
+        <li><a href="#wrapper">Build the shared wrapper: <code>nimbus/llm.py</code></a></li>
+        <li><a href="#zeroshot">Zero-shot prompting (our first technique)</a></li>
+        <li><a href="#langchain">The same thing in LangChain</a></li>
+        <li><a href="#tradeoffs">Trade-offs &amp; when to reach for zero-shot</a></li>
+        <li><a href="#try">Try / modify this</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 1. MENTAL MODEL -->
+  <section id="mental">
+    <h2>1 · The mental model</h2>
+    <p class="sub">An LLM API is simpler than it looks. Strip away the hype and it's this:</p>
+    <p>You send <strong>text</strong>. The model predicts the <strong>text that should come next</strong>,
+      one token at a time. You get that continuation back. That's the whole interface.</p>
+    <p>Three things are worth burning into memory on day one:</p>
+    <ul>
+      <li><strong>It's stateless.</strong> The model remembers <em>nothing</em> between calls. A
+        "conversation" is an illusion you create by re-sending the whole history every time. This is
+        why long chats get expensive — you pay for the entire transcript on every turn.</li>
+      <li><strong>Messages have roles.</strong> Your input is a list of turns, each tagged
+        <code>user</code> or <code>model</code> (Gemini calls the assistant's role <code>model</code>,
+        not "assistant"). There's also a separate <strong>system instruction</strong> — standing
+        orders that sit above the conversation (Lesson 3 is all about it).</li>
+      <li><strong>It's non-deterministic.</strong> Same input can give different output. You tune that
+        with <code>temperature</code> (0 = focused and near-repeatable; higher = more varied/creative).</li>
+    </ul>
+
+    <div class="anat">
+      <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="Anatomy of a Gemini API call">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#2dd4bf"/>
+          </marker>
+        </defs>
+        <!-- request stack -->
+        <rect class="svgbox" x="14" y="24" width="225" height="44" rx="9"/>
+        <text class="svgt" x="30" y="42">system_instruction</text>
+        <text class="svgm" x="30" y="59">"You are Nimbus Support…"</text>
+
+        <rect class="svgbox2" x="14" y="80" width="225" height="120" rx="9"/>
+        <text class="svgm" x="30" y="101">contents = [</text>
+        <text class="svgmono" x="44" y="121">user:  "How do I…?"</text>
+        <text class="svgmono" x="44" y="141">model: "Try…"</text>
+        <text class="svgmono" x="44" y="161">user:  "It didn't work"</text>
+        <text class="svgm" x="30" y="187">]</text>
+
+        <!-- arrow to model -->
+        <path class="svgarrow" d="M245,120 L320,120"/>
+
+        <!-- model -->
+        <rect class="svgmodel" x="322" y="78" width="150" height="92" rx="12"/>
+        <text class="svgt" x="352" y="118" style="font-weight:700">Gemini</text>
+        <text class="svgm" x="338" y="138">gemini-2.5-flash</text>
+
+        <!-- arrow to response -->
+        <path class="svgarrow" d="M474,120 L548,120"/>
+
+        <!-- response -->
+        <rect class="svgbox" x="550" y="56" width="196" height="40" rx="9"/>
+        <text class="svgm" x="566" y="74">response.text</text>
+        <text class="svgmono" x="566" y="90">"Open Settings →…"</text>
+        <rect class="svgbox2" x="550" y="104" width="196" height="78" rx="9"/>
+        <text class="svgm" x="566" y="124">response.usage_metadata</text>
+        <text class="svgmono" x="566" y="143">prompt_token_count</text>
+        <text class="svgmono" x="566" y="160">candidates_token_count</text>
+        <text class="svgmono" x="566" y="177">total_token_count</text>
+
+        <text class="svgm" x="14" y="226">Stateless: you resend the whole `contents` list every call. The model adds one more `model` turn.</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 2. FIRST CALL -->
+  <section id="first">
+    <h2>2 · Your first call (the smoke test)</h2>
+    <p class="sub">If this runs, your install and API key work. Five lines.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">smoke_test.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from google import genai
+
+# Client() reads your key from the GEMINI_API_KEY (or GOOGLE_API_KEY) env var.
+client = genai.Client()
+
+resp = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="In one sentence, what is cloud file sync?",
+)
+print(resp.text)</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">Cloud file sync automatically keeps the files on your devices identical to a copy stored on a remote server, so a change made in one place shows up everywhere.</div>
+    </div>
+    <p>Line by line:</p>
+    <ul>
+      <li><code>genai.Client()</code> — builds the API client. No key in your code; it's read from the
+        environment. (If both <code>GOOGLE_API_KEY</code> and <code>GEMINI_API_KEY</code> are set,
+        <code>GOOGLE_API_KEY</code> wins.)</li>
+      <li><code>model="gemini-2.5-flash"</code> — which model to call. This is just a string the client
+        passes through. <strong>Swapping models is a one-string change</strong> — remember that; it
+        matters in a minute.</li>
+      <li><code>contents="…"</code> — your prompt. A bare string is shorthand for "one
+        <code>user</code> turn with this text."</li>
+      <li><code>resp.text</code> — the model's reply as a string. (It can be <code>None</code> if the
+        response was blocked or wasn't plain text — we'll handle that in the wrapper.)</li>
+    </ul>
+    <div class="callout warn"><div class="ct">⚠ Heads-up on model lifecycles</div>
+      <p>As of this writing <code>gemini-2.5-flash</code> is live and has stable, published pricing, so
+      we use it — but Google has it on a deprecation schedule (shutdown <strong>2026-10-16</strong>).
+      That's exactly why we'll keep the model name in <em>one</em> constant: when it sunsets, you change
+      a single line to the current flash model and every lesson keeps working. Model IDs are disposable;
+      the techniques aren't.</p>
+    </div>
+  </section>
+
+  <!-- 3. TOKENS / COST -->
+  <section id="tokens">
+    <h2>3 · Tokens, cost &amp; latency</h2>
+    <p class="sub">Every call spends three budgets: money, time, and a rate-limit allowance. You can't
+      manage what you don't measure.</p>
+
+    <h3>What's a token?</h3>
+    <p>Models don't see characters or words — they see <strong>tokens</strong>, chunks of roughly
+      <strong>4 characters</strong> (~¾ of a word in English). <em>"Nimbus sync failed"</em> is about
+      5 tokens. You pay <strong>per token</strong>, separately for input (your prompt) and output (the
+      reply), and the model has a maximum number of tokens it can handle at once (its
+      <em>context window</em>).</p>
+
+    <h3>Measuring it</h3>
+    <p>You can count input tokens <em>before</em> you spend money, and read exact usage <em>after</em>
+      every call.</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">measure.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from google import genai
+from google.genai import types
+
+client = genai.Client()
+MODEL = "gemini-2.5-flash"
+
+question = "How do I share a Nimbus folder with someone who doesn't have an account?"
+
+# Count input tokens BEFORE sending — useful for budgeting / truncation checks.
+# NOTE the attribute name: count_tokens returns .total_tokens (singular).
+ct = client.models.count_tokens(model=MODEL, contents=question)
+print("estimated input tokens:", ct.total_tokens)
+
+resp = client.models.generate_content(
+    model=MODEL,
+    contents=question,
+    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=300),
+)
+print(resp.text)
+
+# Exact accounting AFTER the call lives on usage_metadata (different attribute names!).
+u = resp.usage_metadata
+print("prompt   :", u.prompt_token_count)       # input tokens actually billed
+print("candidate:", u.candidates_token_count)   # output tokens generated
+print("total    :", u.total_token_count)</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">estimated input tokens: 16
+You can share a folder with people who don't have a Nimbus account by creating a
+shareable link: open the folder, choose "Share", then "Create link", and set the
+permission to "Can view" or "Can edit". Anyone with the link can open it in a browser
+without signing up...
+prompt   : 16
+candidate: 58
+total    : 74</div>
+    </div>
+    <div class="callout fail"><div class="ct">✗ Easy bug to hit</div>
+      <p><code>count_tokens(...)</code> gives you <code>.total_tokens</code> (singular). The post-call
+      <code>usage_metadata</code> gives you <code>.total_token_count</code> (with <code>_count</code>).
+      Different objects, different names. Mixing them up is a classic <code>AttributeError</code>.</p>
+    </div>
+
+    <h3>Turning tokens into dollars</h3>
+    <p>Pricing is quoted <strong>per million tokens</strong>, with input cheaper than output. Verified
+      current rates (USD / 1M tokens):</p>
+    <table>
+      <thead><tr><th>Model</th><th>Input</th><th>Output</th><th>Good for</th></tr></thead>
+      <tbody>
+        <tr><td><strong>gemini-2.5-flash</strong></td><td>$0.30</td><td>$2.50</td><td>Our default — fast, cheap, capable</td></tr>
+        <tr><td>gemini-2.5-flash-lite</td><td>$0.10</td><td>$0.40</td><td>High-volume, simple tasks (classification)</td></tr>
+        <tr><td>gemini-2.5-pro</td><td>$1.25</td><td>$10.00</td><td>Hard reasoning (≤200k-token prompts; pricier above)</td></tr>
+      </tbody>
+    </table>
+    <p>That 74-token call above costs about <code>16/1e6 × $0.30 + 58/1e6 × $2.50 ≈ $0.00015</code> —
+      a sixth of a hundredth of a cent. Trivial once. <strong>Multiply by 50,000 support tickets a
+      day</strong> and model choice and prompt length become real money. That's the mindset.</p>
+    <div class="callout cost"><div class="ct">◆ Two pricing gotchas</div>
+      <p><strong>1. Output is ~8× input</strong> on flash — verbose answers cost more than long
+      prompts. <strong>2. Pro is context-tiered</strong>: prompts over 200k tokens jump to
+      $2.50 / $15.00. Embeddings (Lesson 8) are billed on input only. Our cost helper handles the flat
+      case; we'll note the tier when it matters.</p>
+    </div>
+
+    <h3>Latency: the other budget</h3>
+    <p>Bigger models think longer. Rough rule: <code>flash-lite &lt; flash &lt; pro</code> for
+      latency, and the reverse for capability. Output length dominates wall-clock time (each token is
+      generated sequentially), so <code>max_output_tokens</code> is a latency lever, not just a cost
+      lever. For a live support chat, a 2-second flash answer usually beats a 9-second pro answer that's
+      marginally better.</p>
+  </section>
+
+  <!-- 4. CONSTRAINTS -->
+  <section id="constraints">
+    <h2>4 · The four real constraints</h2>
+    <p class="sub">Toy scripts ignore these. Production code can't. Each one motivates a piece of the
+      wrapper we build next.</p>
+    <table>
+      <thead><tr><th>Constraint</th><th>What goes wrong</th><th>How we handle it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Non-determinism</strong></td><td>Same prompt, different answer; a test that passed yesterday fails today.</td><td>Set <code>temperature=0</code> for tasks that should be stable (classification, extraction); accept variance elsewhere and <em>evaluate</em> (Lesson 9).</td></tr>
+        <tr><td><strong>Rate limits</strong></td><td>Too many requests too fast → HTTP <code>429</code> and your script dies mid-batch.</td><td>Catch <code>429</code>, wait, and retry with <strong>exponential backoff</strong>.</td></tr>
+        <tr><td><strong>Transient failures</strong></td><td>The API returns <code>500/503</code> for a few seconds for no reason you control.</td><td>Same retry path as 429; give up after N attempts.</td></tr>
+        <tr><td><strong>Graceful failure</strong></td><td>A blocked or empty response makes <code>resp.text</code> be <code>None</code>; <code>.strip()</code> then crashes.</td><td>Detect empty/blocked output and raise a clear error instead of a mystery <code>NoneType</code> crash.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5. WRAPPER -->
+  <section id="wrapper">
+    <h2>5 · Build the shared wrapper: <code>nimbus/llm.py</code></h2>
+    <p class="sub">This is the most important file in the course. Every later lesson imports it. It turns
+      the raw SDK into a client that retries, times out, tracks spend, and fails loudly-but-cleanly.</p>
+    <p>Create a folder <code>nimbus/</code> and put this in <code>nimbus/llm.py</code>:</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">nimbus/llm.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">"""nimbus/llm.py — the shared LLM client used across the whole course.
+
+Wraps the Google Gemini SDK with the production basics:
+  * the model name lives in ONE place (easy to swap when a model is deprecated)
+  * retries with exponential backoff on rate limits (429) and transient 5xx errors
+  * a hard per-call timeout
+  * token counting + USD cost estimation, accumulated across calls
+  * graceful failure: a blocked/empty reply raises a clear error, not a NoneType crash
+"""
+from __future__ import annotations
+import time
+import random
+from dataclasses import dataclass
+
+from google import genai
+from google.genai import types
+from google.genai import errors
+
+# --- Config: change the model in ONE place -----------------------------------
+# gemini-2.5-flash = fast + cheap + capable. It's on a deprecation schedule
+# (shutdown 2026-10-16); when that lands, swap this single string for the current
+# flash model. The call shape below does not change.
+DEFAULT_MODEL = "gemini-2.5-flash"
+
+# USD per 1,000,000 tokens. Verified against ai.google.dev/gemini-api/docs/pricing.
+# Re-check periodically — providers change prices silently.
+PRICING = {
+    "gemini-2.5-flash":      {"input": 0.30, "output": 2.50},
+    "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40},
+    "gemini-2.5-pro":        {"input": 1.25, "output": 10.00},  # flat rate <=200k-token prompts
+}
+
+# HTTP status codes worth retrying: rate limit + transient server errors.
+RETRYABLE = {429, 500, 502, 503, 504}
+
+
+@dataclass
+class Usage:
+    """Running totals so a script can report what it actually cost."""
+    calls: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    usd: float = 0.0
+
+    def add(self, model: str, in_tok: int, out_tok: int) -> None:
+        self.calls += 1
+        self.input_tokens += in_tok
+        self.output_tokens += out_tok
+        price = PRICING.get(model, {"input": 0.0, "output": 0.0})
+        self.usd += in_tok / 1e6 * price["input"] + out_tok / 1e6 * price["output"]
+
+    def report(self) -> str:
+        return (f"{self.calls} calls | {self.input_tokens} in + "
+                f"{self.output_tokens} out tokens | ~${self.usd:.6f}")
+
+
+class LLM:
+    """A thin, production-minded wrapper around the Gemini client."""
+
+    def __init__(self, model: str = DEFAULT_MODEL, max_retries: int = 5,
+                 timeout_s: float = 30.0):
+        # http_options.timeout is in MILLISECONDS. The client reads the API key
+        # from GEMINI_API_KEY / GOOGLE_API_KEY automatically.
+        self.client = genai.Client(
+            http_options=types.HttpOptions(timeout=int(timeout_s * 1000)),
+        )
+        self.model = model
+        self.max_retries = max_retries
+        self.usage = Usage()
+
+    def count_tokens(self, contents) -> int:
+        """Input-token count BEFORE a call (note: .total_tokens, singular)."""
+        return self.client.models.count_tokens(
+            model=self.model, contents=contents).total_tokens
+
+    def generate(self, contents, *, system: str | None = None,
+                 temperature: float = 0.2, max_output_tokens: int = 1024,
+                 **config_kwargs) -> str:
+        """Text-in / text-out, with retries, timeout, cost tracking.
+
+        Returns the reply text. Raises after retries are exhausted, or if the
+        model returns no usable text (blocked / empty / non-text response).
+        """
+        config = types.GenerateContentConfig(
+            system_instruction=system,
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+            **config_kwargs,
+        )
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                resp = self.client.models.generate_content(
+                    model=self.model, contents=contents, config=config,
+                )
+            except errors.APIError as e:
+                # e.code is the HTTP status. Retry only transient ones.
+                if e.code in RETRYABLE and attempt < self.max_retries:
+                    backoff = min(2 ** attempt + random.random(), 30.0)
+                    print(f"[llm] {e.code} on attempt {attempt + 1}; "
+                          f"retrying in {backoff:.1f}s")
+                    time.sleep(backoff)
+                    continue
+                raise  # 400s and exhausted retries propagate
+
+            # --- graceful failure: a blocked/empty reply has resp.text == None ---
+            if resp.text is None:
+                reason = (resp.candidates[0].finish_reason
+                          if resp.candidates else "no candidates")
+                raise RuntimeError(f"Model returned no text (finish_reason={reason}).")
+
+            u = resp.usage_metadata
+            self.usage.add(self.model,
+                           u.prompt_token_count or 0,
+                           u.candidates_token_count or 0)
+            return resp.text
+
+        # Unreachable in practice, but keeps the type checker happy.
+        raise RuntimeError("retry loop exited unexpectedly")
+
+
+if __name__ == "__main__":
+    llm = LLM()
+    answer = llm.generate(
+        "In one sentence, what is cloud file sync?",
+        temperature=0.0,
+    )
+    print(answer)
+    print("---")
+    print(llm.usage.report())</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output of <span style="color:#9ecbff">python -m nimbus.llm</span></div>
+      <div class="rbody">Cloud file sync keeps a set of files automatically consistent across multiple devices by mirroring every change to a central copy in the cloud.
+---
+1 calls | 11 in + 22 out tokens | ~$0.000058</div>
+    </div>
+    <div class="callout key"><div class="ct">✦ What this buys you</div>
+      <p>From now on a lesson can just write <code>llm = LLM(); text = llm.generate(prompt)</code> and
+      get retries, a timeout, cost tracking, and clean errors for free — while still being a thin,
+      readable layer over the real SDK. We didn't hide the API; we hardened it.</p>
+    </div>
+    <div class="callout info"><div class="ct">ℹ Two honest notes</div>
+      <p><strong>Timeouts vs. retries:</strong> a network timeout raises an <code>httpx</code>
+      exception, not an <code>APIError</code>; catch those too if you want timeouts retried. We keep the
+      wrapper focused on the HTTP status codes the API actually returns. <strong>Built-in retries:</strong>
+      the SDK can retry for you via <code>HttpOptions(retry_options=...)</code> — we hand-roll it here so
+      you can <em>see</em> exponential backoff, which is the thing worth understanding.</p>
+    </div>
+  </section>
+
+  <!-- 6. ZERO-SHOT -->
+  <section id="zeroshot">
+    <h2>6 · Zero-shot prompting</h2>
+    <p class="sub">Our first real technique — and the baseline every other technique is measured against.</p>
+    <p><strong>Zero-shot</strong> means: state the task in plain language and ask, giving the model
+      <em>no examples</em> of the task being done. You're relying entirely on what the model already
+      learned during training. It's the simplest possible prompt, and very often it's enough.</p>
+
+    <h4>Why it works</h4>
+    <p>Modern models are <em>instruction-tuned</em> — fine-tuned to follow natural-language requests.
+      For any task well-represented in their training data ("summarize this", "answer this question",
+      "fix this grammar"), they generalize from the instruction alone. No examples needed.</p>
+
+    <h4>When to use it</h4>
+    <ul>
+      <li>The task is common and the output format is loose (a free-text answer).</li>
+      <li>You're prototyping and want a baseline before investing in anything fancier.</li>
+      <li>Token budget is tight — zero-shot is the cheapest prompt there is (no example tokens).</li>
+    </ul>
+
+    <p>Here's our Nimbus support baseline — a customer question, answered zero-shot through the wrapper:</p>
+    <figure class="code">
+      <figcaption><span class="chip raw">Raw Gemini SDK</span><span class="fname">zero_shot.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from nimbus.llm import LLM
+
+llm = LLM()
+
+# The entire "prompt" is just the user's question. No examples, no persona, no context.
+question = "My Nimbus desktop app says 'sync paused' and won't resume. What do I do?"
+
+answer = llm.generate(question, temperature=0.3, max_output_tokens=350)
+print(answer)
+print("\n---\n" + llm.usage.report())</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">A few things to try when sync is paused and won't resume:
+
+1. Click the Nimbus icon in your system tray/menu bar and choose "Resume syncing" —
+   sometimes it's just been paused manually.
+2. Check your internet connection and that you're signed in.
+3. Make sure you have enough local disk space and cloud storage quota.
+4. Quit Nimbus completely and reopen it.
+5. If it persists, sign out and back in, or reinstall the desktop app.
+
+If none of that works, contact support with your app version and OS.
+
+---
+1 calls | 28 in + 121 out tokens | ~$0.00031</div>
+    </div>
+
+    <h4>Failure modes (look closely at that answer)</h4>
+    <p>It reads great — and that's the trap. Zero-shot has no idea what <em>Nimbus</em> actually is:</p>
+    <ul>
+      <li><strong>Confident hallucination.</strong> "Resume syncing", "cloud storage quota" — those
+        menu items and concepts are <em>plausible guesses</em>, not facts about our product. The model
+        can't know Nimbus's real UI. Lesson 8 (RAG) fixes this by grounding answers in the actual help
+        center.</li>
+      <li><strong>No format control.</strong> Today it returned a numbered list; tomorrow a paragraph.
+        Fine for chat, useless if you need to parse the output. Lessons 2 &amp; 6 fix this.</li>
+      <li><strong>No persona or guardrails.</strong> Generic tone, no escalation policy, will happily
+        answer off-topic questions. Lesson 3 fixes this.</li>
+      <li><strong>Non-deterministic.</strong> We set <code>temperature=0.3</code>, so re-running gives
+        a slightly different answer each time.</li>
+    </ul>
+    <div class="callout key"><div class="ct">✦ The whole course in one idea</div>
+      <p>Every later technique exists to fix a specific weakness you just saw in this zero-shot baseline.
+      Keep this answer in mind — we'll measure everything against it.</p>
+    </div>
+  </section>
+
+  <!-- 7. LANGCHAIN -->
+  <section id="langchain">
+    <h2>7 · The same thing in LangChain</h2>
+    <p class="sub">Now the contrast that runs through the whole course: build it again with the
+      framework, and ask what changed.</p>
+    <p>LangChain wraps each provider in a uniform <code>ChatModel</code> interface. You build messages
+      from typed objects (<code>SystemMessage</code>, <code>HumanMessage</code>) and call
+      <code>.invoke()</code>. Here's the zero-shot baseline, LangChain-style:</p>
+    <figure class="code">
+      <figcaption><span class="chip lc">LangChain</span><span class="fname">zero_shot_lc.py</span>
+        <button class="copy">Copy</button></figcaption>
+      <pre><code class="render" data-lang="python"></code></pre>
+      <script type="text/plain" class="src">from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage
+
+# LangChain reads GOOGLE_API_KEY (falls back to GEMINI_API_KEY).
+# max_retries gives you backoff for free — the framework's version of our retry loop.
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    temperature=0.3,
+    max_output_tokens=350,
+    max_retries=5,
+)
+
+question = "My Nimbus desktop app says 'sync paused' and won't resume. What do I do?"
+resp = llm.invoke([HumanMessage(question)])
+
+print(resp.content)                 # the answer text
+print(resp.usage_metadata)          # {'input_tokens': .., 'output_tokens': .., 'total_tokens': ..}</script>
+    </figure>
+    <div class="response"><div class="rhead">representative output</div>
+      <div class="rbody">When Nimbus shows "sync paused," try these steps in order:
+1. Open the Nimbus menu and select Resume — it may have been paused manually...
+(similar content to the raw version)
+
+{'input_tokens': 28, 'output_tokens': 118, 'total_tokens': 146, 'input_token_details': {'cache_read': 0}}</div>
+    </div>
+
+    <h4>What did the framework do for us?</h4>
+    <p>Honestly, not much <em>yet</em> — and that's the point of starting here. For a single zero-shot
+      call, LangChain mostly adds a layer of typed objects. But notice what it quietly handled:</p>
+    <table>
+      <thead><tr><th>Concern</th><th>Raw SDK (our <code>llm.py</code>)</th><th>LangChain</th></tr></thead>
+      <tbody>
+        <tr><td>Retries / backoff</td><td>We wrote the loop ourselves (≈15 lines)</td><td>Built in via <code>max_retries=</code></td></tr>
+        <tr><td>Usage accounting</td><td>We read <code>usage_metadata</code> and price it</td><td>Normalized to <code>resp.usage_metadata['input_tokens']</code> — same keys across all providers</td></tr>
+        <tr><td>Messages</td><td>A string or <code>types.Content</code> objects</td><td><code>HumanMessage</code> / <code>SystemMessage</code> objects</td></tr>
+        <tr><td>Swapping providers</td><td>Rewrite against a new SDK</td><td>Swap the chat-model class; rest of the code is unchanged</td></tr>
+        <tr><td>What it costs you</td><td>Nothing hidden — you see every call</td><td>A dependency, an abstraction to learn, and behavior you don't directly control</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info"><div class="ct">ℹ The recurring question</div>
+      <p>For one call, the raw SDK is barely more code and far more transparent. LangChain's value shows
+      up when you <em>compose</em> things — chains, retrievers, agents, swapping models — which is exactly
+      what the later lessons build. We'll keep doing both so you can judge the trade-off yourself, every
+      time, instead of taking it on faith.</p>
+    </div>
+  </section>
+
+  <!-- 8. TRADEOFFS -->
+  <section id="tradeoffs">
+    <h2>8 · Trade-offs: when to reach for zero-shot</h2>
+    <p class="sub">Every technique in this course gets this scorecard: cost, latency, reliability, and
+      the one-line verdict.</p>
+    <table>
+      <thead><tr><th>Dimension</th><th>Zero-shot</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cost</strong></td><td>💚 Lowest. No example tokens — you pay only for the instruction + question + answer.</td></tr>
+        <tr><td><strong>Latency</strong></td><td>💚 Lowest. Shortest prompt, single call.</td></tr>
+        <tr><td><strong>Reliability</strong></td><td>🟠 Lowest of the techniques. No format control, no grounding, will hallucinate specifics confidently.</td></tr>
+        <tr><td><strong>Reach for it when…</strong></td><td>The task is common, the format is loose, and a wrong-but-plausible answer is acceptable (or you're just establishing a baseline).</td></tr>
+        <tr><td><strong>Reach for something else when…</strong></td><td>You need a fixed output shape (→ few-shot / structured output), product-specific facts (→ RAG), a consistent voice (→ system prompt), or multi-step reasoning (→ CoT).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><div class="ct">⚠ One outdated trick, noted and dismissed</div>
+      <p>You'll see old blog posts add things like <em>"You are a world-class expert. I'll tip you $200.
+      Take a deep breath."</em> On today's instruction-tuned models these add tokens and noise for little
+      to no gain. Clear instructions and (when needed) examples beat incantations. We'll keep prompts
+      clean; Lesson 10 has the full myth-busting list.</p>
+    </div>
+  </section>
+
+  <!-- 9. TRY IT -->
+  <section id="try">
+    <div class="tryit">
+      <h3>🛠 Try / modify this</h3>
+      <ol>
+        <li><strong>Feel the non-determinism.</strong> Run <code>zero_shot.py</code> three times at
+          <code>temperature=0.9</code>, then three times at <code>temperature=0.0</code>. Watch the
+          variance shrink. This is why stable tasks pin temperature to 0.</li>
+        <li><strong>Make the cost real.</strong> Add a loop that calls <code>llm.generate()</code> 20
+          times, then print <code>llm.usage.report()</code>. Now change <code>DEFAULT_MODEL</code> to
+          <code>"gemini-2.5-flash-lite"</code> and compare the dollar figure. One constant, big swing.</li>
+        <li><strong>Trigger graceful failure.</strong> Set <code>max_output_tokens=1</code> and ask for
+          a long answer — then inspect what <code>finish_reason</code> you get. Confirm the wrapper raises
+          a clear error instead of crashing on <code>None</code>.</li>
+        <li><strong>Catch a hallucination.</strong> Ask <em>"What's the keyboard shortcut to force-sync
+          in Nimbus?"</em> zero-shot. The model will likely invent one. Note it down — in Lesson 8 we'll
+          ground this same question in the real help center and watch the made-up answer disappear.</li>
+        <li><strong>Prove the abstraction.</strong> In the LangChain version, change <code>model=</code>
+          to <code>"gemini-2.5-flash-lite"</code> and confirm nothing else needs to change. That
+          provider-swap ergonomics is LangChain's core pitch.</li>
+      </ol>
+    </div>
+    <div class="callout key"><div class="ct">✦ What you built</div>
+      <p>A working Gemini call, a mental model of tokens/cost/latency, and <code>nimbus/llm.py</code> —
+      a retrying, cost-tracking, fail-safe client every later lesson imports. Plus your first technique,
+      <strong>zero-shot</strong>, and a clear-eyed list of what it can't do.</p>
+    </div>
+    <p style="color:var(--muted)"><strong>Next up — Lesson 2: Few-shot prompting.</strong> We give the
+      model a handful of examples and turn that loose, unpredictable output into a reliable
+      <em>classifier</em> that routes incoming Nimbus tickets. It's the cheapest reliability upgrade in
+      the whole toolkit.</p>
+  </section>
+
+  <nav class="pager">
+    <a class="prev" href="../index.html">
+      <div class="dir">← Back</div><div class="ttl">Course home</div></a>
+    <a class="next" href="lesson-02-few-shot.html">
+      <div class="dir">Next →</div><div class="ttl">Lesson 2 · Few-shot prompting</div></a>
+  </nav>
+
+  <footer>
+    Prompting Lab · Lesson 1 of 10 · anchored to the Nimbus Support Agent.<br>
+    Code targets Python + the Google Gemini SDK (<code>google-genai</code>), contrasted with LangChain.
+  </footer>
+</div>
+
+<script>
+/* ============ Shared scripts (identical across all lessons) ============ */
+(function(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  function hlPython(code){
+    const KW=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+    const BLT=new Set("print len range dict list set tuple str int float bool open enumerate zip map filter sum min max sorted reversed type isinstance issubclass super getattr setattr hasattr abs round repr input format vars dir id".split(" "));
+    const re=/([rbfuRBFU]{0,2})("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*)|([rbfuRBFU]{0,2})("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(@[A-Za-z_][\w.]*)|(\b\d[\w.]*\b)|([A-Za-z_]\w*)/g;
+    let out="",last=0,m,prev="";
+    while((m=re.exec(code))){
+      out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+      if(m[2]!==undefined){ out+='<span class="t-str">'+esc((m[1]||"")+m[2])+'</span>'; prev=""; }
+      else if(m[3]!==undefined){ out+='<span class="t-com">'+esc(m[3])+'</span>'; prev=""; }
+      else if(m[5]!==undefined){ out+='<span class="t-str">'+esc((m[4]||"")+m[5])+'</span>'; prev=""; }
+      else if(m[6]!==undefined){ out+='<span class="t-dec">'+esc(m[6])+'</span>'; prev=""; }
+      else if(m[7]!==undefined){ out+='<span class="t-num">'+esc(m[7])+'</span>'; prev=""; }
+      else if(m[8]!==undefined){
+        const w=m[8], nxt=code[re.lastIndex];
+        if(KW.has(w)) out+='<span class="t-kw">'+esc(w)+'</span>';
+        else if(prev==="def"||prev==="class") out+='<span class="t-fn">'+esc(w)+'</span>';
+        else if(BLT.has(w)) out+='<span class="t-blt">'+esc(w)+'</span>';
+        else if(nxt==="(") out+='<span class="t-call">'+esc(w)+'</span>';
+        else out+=esc(w);
+        prev=w;
+      }
+    }
+    out+=esc(code.slice(last));
+    return out;
+  }
+
+  function hlBash(code){
+    return esc(code).replace(/(#[^\n]*)/g,'<span class="t-com">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g,'<span class="t-str">$1</span>');
+  }
+
+  document.querySelectorAll("figure.code").forEach(fig=>{
+    const codeEl=fig.querySelector("code.render");
+    const src=fig.querySelector("script.src");
+    if(codeEl&&src){
+      let txt=src.textContent.replace(/^\n/,"").replace(/\s+$/,"");
+      const lang=codeEl.getAttribute("data-lang")||"python";
+      codeEl.innerHTML = lang==="bash" ? hlBash(txt) : hlPython(txt);
+      codeEl.dataset.raw=txt;
+    }
+    const btn=fig.querySelector(".copy");
+    if(btn){btn.addEventListener("click",()=>{
+      const raw=fig.querySelector("code.render")?.dataset.raw||"";
+      navigator.clipboard.writeText(raw).then(()=>{
+        const o=btn.textContent;btn.textContent="Copied ✓";
+        setTimeout(()=>btn.textContent=o,1200);
+      });
+    });}
+  });
+
+  // ---- theme toggle (default dark; choice persisted in localStorage) ----
+  var tb=document.getElementById("themeToggle");
+  function syncIcon(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(tb) tb.textContent = light ? "☀️" : "🌙";
+  }
+  syncIcon();
+  if(tb) tb.addEventListener("click",function(){
+    var light=document.documentElement.getAttribute("data-theme")==="light";
+    if(light) document.documentElement.removeAttribute("data-theme");
+    else      document.documentElement.setAttribute("data-theme","light");
+    try{ localStorage.setItem("plab-theme", light ? "dark" : "light"); }catch(e){}
+    syncIcon();
+  });
+})();
+</script>
+</body>
+</html>
