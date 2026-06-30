@@ -246,10 +246,9 @@ print(intent, "\n\n", first)</script>
     <div class="response"><div class="rhead">representative output</div>
       <div class="rbody">billing
 
-I'm sorry about the double charge — I completely understand the frustration. I'm
-not able to issue refunds myself, but I can get this sorted: could you confirm
-the date of the duplicate $10 charge? I'll summarize it and escalate to a human
-billing agent who can review and process any refund. Thanks for your patience.</div>
+I understand your frustration about being charged twice. I can help by escalating
+this to our billing team so they can investigate and resolve the duplicate charge
+for you. Would you like me to do that now?</div>
     </div>
     <p>Notice what each stage contributed: <strong>classify</strong> picked <code>billing</code>,
       <strong>route</strong> supplied the "don't promise refunds, escalate" guidance, and
@@ -336,22 +335,26 @@ if __name__ == "__main__":
     print(critic.usage.report(), "(critic)")</script>
     </figure>
     <div class="response good"><div class="rhead">representative run</div>
-      <div class="rbody">[bug] refines=1 (passed)
+      <div class="rbody">[llm] 503 on attempt 1; retrying in 1.8s
+[bug] refines=0 (passed)
 
-I'm sorry sync keeps stopping — let's fix it. Try these in order:
-1. Confirm you're online and signed in.
-2. Quit Nimbus fully and reopen it, then click Resume on the sync status.
-3. Check you still have free storage space.
-
-If it's still stopping, send me your operating system, your Nimbus app version,
-and the exact error text, and I'll take it from there.
+I'm sorry to hear your sync keeps stopping. Let's get it working smoothly again.
+Often this can be fixed by restarting the Nimbus app and your computer.
+1. Quit Nimbus: right-click the Nimbus icon in your system tray or menu bar, select "Quit."
+2. Restart your computer.
+3. Open Nimbus again.
+If the issue continues, please tell me your operating system, your Nimbus app
+version, and any specific error messages.
 ---
-2 calls | 520 in + 240 out tokens | ~$0.00076 (drafter)
-2 calls | 900 in + 40 out tokens  | ~$0.00037 (critic)</div>
+1 calls | 337 in + 138 out tokens | ~$0.000446 (drafter)
+1 calls | 246 in + 1 out tokens   | ~$0.000076 (critic)</div>
     </div>
-    <p>Round 1's draft skipped asking for the version/error; the critic caught it, and the refine pass
-      added it — then round 2 passed. The reply is the product of <strong>five calls across two models</strong>
-      (one cheap classify + two drafts + two critiques), each doing one job well.</p>
+    <p>This time the critic <strong>passed the very first draft</strong> (<code>refines=0</code>) — it
+      already gave clear steps <em>and</em> asked for the OS, version, and error. The loop only spends
+      extra calls when a draft falls short; here it didn't, so the reply took just three calls across two
+      models (one cheap classify + one draft + one critique). (Tighten the rubric — or weaken the drafter —
+      to watch the refine step actually kick in.) The 503 up top is a real transient error the wrapper
+      retried through.</p>
   </section>
 
   <!-- 5 FAILURE MODES -->

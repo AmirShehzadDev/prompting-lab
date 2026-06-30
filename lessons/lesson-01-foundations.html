@@ -267,7 +267,7 @@ resp = client.models.generate_content(
 print(resp.text)</script>
     </figure>
     <div class="response"><div class="rhead">representative output</div>
-      <div class="rbody">Cloud file sync automatically keeps the files on your devices identical to a copy stored on a remote server, so a change made in one place shows up everywhere.</div>
+      <div class="rbody">Cloud file sync automatically keeps your files updated and identical across multiple devices by storing and managing them in the cloud.</div>
     </div>
     <p>Line by line:</p>
     <ul>
@@ -338,14 +338,13 @@ print("candidate:", u.candidates_token_count)   # output tokens generated
 print("total    :", u.total_token_count)</script>
     </figure>
     <div class="response"><div class="rhead">representative output</div>
-      <div class="rbody">estimated input tokens: 16
-You can share a folder with people who don't have a Nimbus account by creating a
-shareable link: open the folder, choose "Share", then "Create link", and set the
-permission to "Can view" or "Can edit". Anyone with the link can open it in a browser
-without signing up...
-prompt   : 16
-candidate: 58
-total    : 74</div>
+      <div class="rbody">estimated input tokens: 18
+Unfortunately, **you cannot directly share a Nimbus folder with someone who
+doesn't have a Nimbus account.** Nimbus is designed for collaborative work within
+its own ecosystem... (answer continues until the 300-token cap)
+prompt   : 18
+candidate: 300
+total    : 318</div>
     </div>
     <div class="callout fail"><div class="ct">✗ Easy bug to hit</div>
       <p><code>count_tokens(...)</code> gives you <code>.total_tokens</code> (singular). The post-call
@@ -364,8 +363,8 @@ total    : 74</div>
         <tr><td>gemini-2.5-pro</td><td>$1.25</td><td>$10.00</td><td>Hard reasoning (≤200k-token prompts; pricier above)</td></tr>
       </tbody>
     </table>
-    <p>That 74-token call above costs about <code>16/1e6 × $0.30 + 58/1e6 × $2.50 ≈ $0.00015</code> —
-      a sixth of a hundredth of a cent. Trivial once. <strong>Multiply by 50,000 support tickets a
+    <p>That 318-token call above costs about <code>18/1e6 × $0.30 + 300/1e6 × $2.50 ≈ $0.00076</code> —
+      under a tenth of a cent. Trivial once. <strong>Multiply by 50,000 support tickets a
       day</strong> and model choice and prompt length become real money. That's the mindset.</p>
     <div class="callout cost"><div class="ct">◆ Two pricing gotchas</div>
       <p><strong>1. Output is ~8× input</strong> on flash — verbose answers cost more than long
@@ -540,9 +539,9 @@ if __name__ == "__main__":
     print(llm.usage.report())</script>
     </figure>
     <div class="response"><div class="rhead">representative output of <span style="color:#9ecbff">python -m nimbus.llm</span></div>
-      <div class="rbody">Cloud file sync keeps a set of files automatically consistent across multiple devices by mirroring every change to a central copy in the cloud.
+      <div class="rbody">Cloud file sync is the automatic synchronization of files across multiple devices via a cloud-based server, ensuring access to the latest versions from anywhere.
 ---
-1 calls | 11 in + 22 out tokens | ~$0.000058</div>
+1 calls | 11 in + 28 out tokens | ~$0.000073</div>
     </div>
     <div class="callout key"><div class="ct">✦ What this buys you</div>
       <p>From now on a lesson can just write <code>llm = LLM(); text = llm.generate(prompt)</code> and
@@ -595,30 +594,33 @@ print(answer)
 print("\n---\n" + llm.usage.report())</script>
     </figure>
     <div class="response"><div class="rhead">representative output</div>
-      <div class="rbody">A few things to try when sync is paused and won't resume:
+      <div class="rbody">It's frustrating when Nimbus pauses syncing! Here's a comprehensive troubleshooting
+guide, starting with the simplest solutions:
 
-1. Click the Nimbus icon in your system tray/menu bar and choose "Resume syncing" —
-   sometimes it's just been paused manually.
-2. Check your internet connection and that you're signed in.
-3. Make sure you have enough local disk space and cloud storage quota.
-4. Quit Nimbus completely and reopen it.
-5. If it persists, sign out and back in, or reinstall the desktop app.
+**Quick Fixes (Try These First!)**
+1. Check Your Internet Connection (open a browser, try a few sites)...
+2. Restart Nimbus Desktop App (fully quit from the system tray, then reopen).
+3. Restart Your Computer.
 
-If none of that works, contact support with your app version and OS.
+**Nimbus-Specific Troubleshooting**
+4. Check Nimbus Status Page (search "Nimbus Note status page")...
+5. Manually Initiate Sync — look for a "Sync" button or option within the
+... (answer continues until the 350-token cap)
 
 ---
-1 calls | 28 in + 121 out tokens | ~$0.00031</div>
+1 calls | 21 in + 350 out tokens | ~$0.000881</div>
     </div>
 
     <h4>Failure modes (look closely at that answer)</h4>
     <p>It reads great — and that's the trap. Zero-shot has no idea what <em>Nimbus</em> actually is:</p>
     <ul>
-      <li><strong>Confident hallucination.</strong> "Resume syncing", "cloud storage quota" — those
-        menu items and concepts are <em>plausible guesses</em>, not facts about our product. The model
-        can't know Nimbus's real UI. Lesson 8 (RAG) fixes this by grounding answers in the actual help
-        center.</li>
-      <li><strong>No format control.</strong> Today it returned a numbered list; tomorrow a paragraph.
-        Fine for chat, useless if you need to parse the output. Lessons 2 &amp; 6 fix this.</li>
+      <li><strong>Confident hallucination.</strong> It assumes Nimbus is "Nimbus Note" (a real, different
+        product), invents a "Nimbus Note status page", and guesses menu options like "Manually Initiate
+        Sync" — all <em>plausible-sounding</em>, none of them facts about <em>our</em> Nimbus. The model
+        can't know a product it never saw in training. Lesson 8 (RAG) fixes this by grounding answers in
+        the actual help center.</li>
+      <li><strong>No format control.</strong> This run was a long markdown guide; another might be a
+        terse paragraph. Fine for chat, useless if you need to parse the output. Lessons 2 &amp; 6 fix this.</li>
       <li><strong>No persona or guardrails.</strong> Generic tone, no escalation policy, will happily
         answer off-topic questions. Lesson 3 fixes this.</li>
       <li><strong>Non-deterministic.</strong> We set <code>temperature=0.3</code>, so re-running gives
@@ -652,6 +654,7 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.3,
     max_output_tokens=350,
     max_retries=5,
+    thinking_budget=0,   # disable internal "thinking" so it doesn't eat the output budget
 )
 
 question = "My Nimbus desktop app says 'sync paused' and won't resume. What do I do?"
@@ -661,11 +664,10 @@ print(resp.content)                 # the answer text
 print(resp.usage_metadata)          # {'input_tokens': .., 'output_tokens': .., 'total_tokens': ..}</script>
     </figure>
     <div class="response"><div class="rhead">representative output</div>
-      <div class="rbody">When Nimbus shows "sync paused," try these steps in order:
-1. Open the Nimbus menu and select Resume — it may have been paused manually...
-(similar content to the raw version)
+      <div class="rbody">(a long markdown troubleshooting guide, much like the raw version — e.g. "check
+your system tray, right-click the Nimbus icon, select Quit, then reopen"...)
 
-{'input_tokens': 28, 'output_tokens': 118, 'total_tokens': 146, 'input_token_details': {'cache_read': 0}}</div>
+{'input_tokens': 21, 'output_tokens': 350, 'total_tokens': 371, 'input_token_details': {'cache_read': 0}}</div>
     </div>
 
     <h4>What did the framework do for us?</h4>

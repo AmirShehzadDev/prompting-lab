@@ -18,7 +18,13 @@ print("estimated input tokens:", ct.total_tokens)
 resp = client.models.generate_content(
     model=MODEL,
     contents=question,
-    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=300),
+    config=types.GenerateContentConfig(
+        temperature=0.2,
+        max_output_tokens=300,
+        # Turn off the model's internal "thinking" so total == prompt + candidate
+        # and the answer isn't truncated by hidden reasoning. (More in Lesson 4.)
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    ),
 )
 print(resp.text)
 

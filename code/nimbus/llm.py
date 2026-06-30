@@ -83,6 +83,10 @@ class LLM:
         Returns the reply text. Raises after retries are exhausted, or if the
         model returns no usable text (blocked / empty / non-text response).
         """
+        # Disable "thinking" by default so token accounting stays clean and the
+        # visible answer isn't truncated by hidden reasoning eating the token budget.
+        # Callers opt back in by passing thinking_config=... (see Lesson 4).
+        config_kwargs.setdefault("thinking_config", types.ThinkingConfig(thinking_budget=0))
         config = types.GenerateContentConfig(
             system_instruction=system,
             temperature=temperature,
@@ -133,6 +137,7 @@ class LLM:
             max_output_tokens=max_output_tokens,
             response_mime_type="application/json",
             response_schema=schema,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         )
         for attempt in range(self.max_retries + 1):
             try:

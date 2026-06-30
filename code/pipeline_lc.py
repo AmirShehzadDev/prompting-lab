@@ -28,7 +28,7 @@ draft_prompt = ChatPromptTemplate.from_messages([
     ("human", "Customer message (category: {intent}): {message}\n\n"
               "Handling guidance: {guidance}\n\nWrite the support reply now."),
 ])
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.4, max_output_tokens=250)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.4, max_output_tokens=250, thinking_budget=0)
 draft_chain = draft_prompt | llm | StrOutputParser()
 
 # Each .assign() adds a key to the dict flowing down the chain.

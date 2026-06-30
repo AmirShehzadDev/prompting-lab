@@ -21,7 +21,7 @@ class Ticket(BaseModel):
     suggested_next_step: str
 
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, thinking_budget=0)
 
 # --- structured output: returns a populated Ticket instance ---
 ticket_llm = llm.with_structured_output(Ticket)

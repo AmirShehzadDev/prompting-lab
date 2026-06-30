@@ -14,6 +14,7 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.3,
     max_output_tokens=350,
     max_retries=5,
+    thinking_budget=0,   # disable internal "thinking" so it doesn't eat the output budget
 )
 
 question = "My Nimbus desktop app says 'sync paused' and won't resume. What do I do?"

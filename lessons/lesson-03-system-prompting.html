@@ -296,20 +296,20 @@ if __name__ == "__main__":
     <p>Recall the Lesson 1 zero-shot answer: confident, fluent, and quietly <em>making up</em> Nimbus's
       exact menu items. With the system prompt, the behavior changes:</p>
     <div class="response bad"><div class="rhead">before — Lesson 1 (no system prompt)</div>
-      <div class="rbody">1. Click the Nimbus icon in your system tray and choose "Resume syncing"...
-2. Check that you have enough cloud storage quota...
-(fluent, but inventing exact menu names it can't actually know)</div>
+      <div class="rbody">...4. Check Nimbus Status Page (search "Nimbus Note status page")...
+5. Manually Initiate Sync — look for a "Sync" button or option within the...
+(fluent, but inventing product specifics — it even assumes Nimbus is "Nimbus Note")</div>
     </div>
     <div class="response good"><div class="rhead">after — with NIMBUS_SYSTEM</div>
-      <div class="rbody">Sorry about the paused sync — let's get it moving. A few quick checks:
+      <div class="rbody">I can help with that! Here are a few steps to get your Nimbus desktop app
+syncing again:
 
-1. Open Nimbus and look for a Resume option on the sync status.
-2. Confirm you're online and signed in.
-3. Make sure your plan still has free storage space.
+1. Check your internet connection: make sure you're connected to the internet.
+2. Restart the app: close Nimbus completely, wait a few seconds, then reopen it.
+3. Restart your computer: sometimes a simple restart resolves the issue.
 
-If it's still stuck, tell me your operating system, the Nimbus app version, and
-any error message you see. I'm not certain of the exact menu wording on your
-version, so those details help me give you the right steps.</div>
+If these steps don't work, please let me know what operating system you're using
+(Windows or macOS) and if you see any specific error messages.</div>
     </div>
     <p>Same model, same question. The system prompt made it <strong>concise, on-brand, and honest about
       what it doesn't know</strong> — it now <em>asks</em> instead of inventing. That last part is key:</p>
@@ -329,17 +329,21 @@ version, so those details help me give you the right steps.</div>
 
     <h4>Off-topic → polite decline + redirect</h4>
     <div class="response"><div class="rhead"><code>answer("Can you write me a poem about my cat?")</code></div>
-      <div class="rbody">I'd love to, but I'm just here for Nimbus support — file syncing, sharing,
-storage, and billing. If there's anything about your Nimbus account or files I
-can help with, I'm all yours!</div>
+      <div class="rbody">I can only answer questions about Nimbus, the cloud file-sync and storage
+product. Is there anything I can help you with regarding syncing, sharing,
+storage, or your Nimbus account?</div>
     </div>
 
     <h4>Refund request → no promise, escalate</h4>
     <div class="response"><div class="rhead"><code>answer("I want a refund for this month's charge, right now.")</code></div>
-      <div class="rbody">I'm sorry for the frustration. I'm not able to approve refunds myself, but I
-can get this to someone who can. Could you tell me the charge amount and date,
-and a sentence on what happened? I'll summarize it and escalate to a human
-billing agent for review.</div>
+      <div class="rbody">I can't directly process refunds, but I can help you understand the next steps.
+To request a refund or discuss a billing charge, please:
+
+1. Go to your account's billing history.
+2. Select the charge in question.
+3. Click "Dispute Charge" and follow the prompts.
+
+If you'd like, I can also escalate this to a human agent who can review your request.</div>
     </div>
     <p>Neither behavior was hard-coded in Python — both fall out of the <em>scope</em> and <em>rules</em>
       sections of the prompt. That's the leverage: a few lines of natural language replace a tangle of
@@ -407,23 +411,28 @@ if __name__ == "__main__":
     print(agent.llm.usage.report())</script>
     </figure>
     <div class="response"><div class="rhead">representative transcript</div>
-      <div class="rbody">A: Sorry about that! Let's get sync running again. First, a couple of quick
-   checks: confirm you're online and signed in, and that your plan has free
-   space. If it's still paused, what operating system and Nimbus app version
-   are you on, and is there an error message?
+      <div class="rbody">A: I can help with that! To get your sync running again, please try these steps:
+   1. Check your internet connection.
+   2. Restart the Nimbus app: close it completely and then open it again.
+   3. Restart your computer.
+   If these steps don't work, please tell me what operating system you're using
+   (Windows, macOS, etc.) and if you see any error messages.
 
-A: Thanks! On Windows 11 with app 3.2, try this: fully quit Nimbus from the
-   system tray, reopen it, and click Resume on the sync status. If it still
-   won't resume, sign out and back in. Tell me what happens and I'll take the
-   next step from there.
+A: Thanks for the details! Since restarting didn't help, let's try checking the
+   sync settings within the Nimbus app:
+   1. Open Nimbus and click the Nimbus icon in your system tray.
+   2. Go to Preferences or Settings.
+   3. Look for a Sync tab or section.
+   4. Ensure that "Pause Sync" is not checked and your folders are selected.
+   If everything looks correct, let me know if you see any specific error messages.
 ---
-2 calls | 612 in + 138 out tokens | ~$0.00053</div>
+2 calls | 717 in + 234 out tokens | ~$0.000800</div>
     </div>
     <p>The second turn — "Windows 11, app version 3.2" — only makes sense because the model received the
       <em>whole history</em>, including its own question. And it stayed perfectly on-brand without us
       re-stating the rules: that's the system prompt persisting.</p>
     <div class="callout cost"><div class="ct">◆ The hidden cost of memory</div>
-      <p>Look at the input tokens: 612 for two turns and climbing. Every turn re-sends the system prompt
+      <p>Look at the input tokens: 717 for two turns and climbing. Every turn re-sends the system prompt
       <em>plus the entire history</em>. Left unchecked, a long chat's cost grows quadratically. Real agents
       trim or summarize old turns and lean on prompt caching for the static system block — we'll handle
       this when conversations get long in later lessons.</p>

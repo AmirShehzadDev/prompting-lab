@@ -145,9 +145,10 @@
     <div class="crumb"><a href="../index.html">Prompting Lab</a> &nbsp;/&nbsp; Lesson 4</div>
     <h1>Chain-of-thought &amp; variants</h1>
     <p class="lead">The agent has a voice and a router, but some support questions need actual
-      <em>reasoning</em> — apply a rule, do some math, weigh clues. Ask for the answer directly and the
-      model often blurts a confident wrong number. Chain-of-thought makes it show its work first — and
-      that single change can flip wrong to right.</p>
+      <em>reasoning</em> — apply a rule, do some math, weigh clues. Modern models often get these right
+      in one shot, but as problems get harder that stops being reliable — and a bare answer never shows
+      <em>how</em> it got there. Chain-of-thought makes the model reason out loud first: more robust on
+      hard problems, and auditable when it matters.</p>
     <div class="meta-badges">
       <span class="mb">⏱ <b>~30 min</b></span>
       <span class="mb">🎓 level: <b>beginner → intermediate</b></span>
@@ -224,12 +225,18 @@ def answer_direct() -> str:
 
 print(answer_direct())</script>
     </figure>
-    <div class="response bad"><div class="rhead">representative output — wrong</div>
-      <div class="rbody">FINAL: plan=Pro, total=$150</div>
+    <div class="response good"><div class="rhead">actual output — correct, even direct</div>
+      <div class="rbody">FINAL: plan=Plus, total=$60</div>
     </div>
-    <p>It fell for the trap: it summed 1,600 + 600 and skipped the ownership rule. When you force a
-      one-token-style jump straight to the answer, the model has nowhere to <em>do</em> the multi-step
-      work — so it pattern-matches the most salient numbers and gets it wrong.</p>
+    <p>It got it <strong>right</strong> — even with thinking switched off and no room to reason out loud,
+      <code>gemini-2.5-flash</code> applied the ownership rule and the math in one shot. That's the honest
+      reality with modern models: a well-posed question like this often just works directly. So why reach
+      for chain-of-thought at all? Two reasons that hold up as problems get harder:
+      <strong>reliability</strong> (direct answers start slipping once the steps pile up and the numbers
+      entangle — this trap is borderline, and a weaker model or a gnarlier version of it would miss) and
+      <strong>transparency</strong> (even when the answer is right, you can't see <em>how</em> it got
+      there — which matters for trust, debugging, and catching the times it's confidently wrong). The rest
+      of this lesson shows the techniques and where they earn their cost.</p>
   </section>
 
   <!-- 2 COT -->
@@ -370,12 +377,14 @@ if __name__ == "__main__":
     print(llm.usage.report())          # note: ~n x the cost of a single CoT call</script>
     </figure>
     <div class="response good"><div class="rhead">representative output</div>
-      <div class="rbody">{'answer': ('plus', 60.0), 'votes': 4, 'of': 5}
-5 calls | 1985 in + 1240 out tokens | ~$0.0037</div>
+      <div class="rbody">{'answer': ('plus', 60.0), 'votes': 5, 'of': 5}
+5 calls | 1105 in + 1348 out tokens | ~$0.003701</div>
     </div>
-    <p>Four of five paths landed on Plus/$60; one slipped to Pro/$150. The vote absorbs that one bad run.
-      The cost is right there in the report: <strong>5× the calls</strong>. Self-consistency buys
-      reliability with money and latency — use it for high-stakes reasoning, not for every request.</p>
+    <p>Here all five paths agreed on Plus/$60 — when the model is confident and correct, self-consistency
+      simply confirms it (and gives you that confidence signal: 5/5 vs a split 3/2 tells you how shaky the
+      answer is). Its real payoff is the harder cases where runs <em>disagree</em> and the majority rescues
+      the answer. Either way the cost is right there: <strong>5× the calls</strong> (~$0.0037 here) — so
+      reserve it for high-stakes reasoning, not every request.</p>
     <div class="callout key"><div class="ct">✦ Voting needs a comparable answer</div>
       <p>Self-consistency only works when you can extract a normalized answer to vote on — which is exactly
       why we parse a structured <code>FINAL</code> line. You can't majority-vote freeform paragraphs.

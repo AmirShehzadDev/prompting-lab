@@ -412,6 +412,14 @@ print(result["messages"][-1].content)      # the final answer
 # result["messages"] is the full trace: human -> tool calls -> tool results -> answer.
 # (create_agent enforces a recursion_limit so the loop can't run forever.)</script>
     </figure>
+    <div class="response good"><div class="rhead">actual output</div>
+      <div class="rbody">It looks like you were charged twice for the Plus monthly plan on June 1, 2026.
+I've escalated this to a human agent who will review the duplicate charge and
+contact you within 24 hours. Your current plan is Plus, and it renews on
+July 15, 2026.</div>
+    </div>
+    <p>Same result as the raw loop — it called both tools, found the duplicate charge and the plan, and
+      escalated — but the loop, tool dispatch, and step guard are all handled for us.</p>
     <table>
       <thead><tr><th>Concern</th><th>Raw loop</th><th>create_agent</th></tr></thead>
       <tbody>

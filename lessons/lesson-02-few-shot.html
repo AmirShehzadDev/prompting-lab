@@ -321,7 +321,7 @@ if __name__ == "__main__":
 bug           <- Sync keeps failing with error code 0x83.
 how_to        <- Where's the button to invite a teammate?
 ---
-3 calls | 396 in + 6 out tokens | ~$0.000042</div>
+3 calls | 435 in + 5 out tokens | ~$0.000046</div>
     </div>
     <p>Clean, lowercase, parseable labels — every time. Two details that matter:</p>
     <ul>
@@ -332,8 +332,8 @@ how_to        <- Where's the button to invite a teammate?
         will make this guarantee structural with enums — but defensive parsing is always good hygiene.)</li>
     </ul>
     <div class="callout info"><div class="ct">ℹ Notice the token count</div>
-      <p>396 input tokens for 3 calls = ~132 per call, versus ~15 for the zero-shot version. That extra
-      ~117 tokens <em>is</em> the six examples, re-sent every single call. Few-shot trades input tokens
+      <p>435 input tokens for 3 calls = ~145 per call, versus ~15 for the zero-shot version. That extra
+      ~130 tokens <em>is</em> the six examples, re-sent every single call. Few-shot trades input tokens
       for reliability. Hold that thought for the cost section.</p>
     </div>
   </section>
@@ -368,12 +368,13 @@ print(f"zero-shot accuracy: {accuracy(classify_zero):.0%}")
 print(f"few-shot  accuracy: {accuracy(classify):.0%}")</script>
     </figure>
     <div class="response"><div class="rhead">representative output</div>
-      <div class="rbody">zero-shot accuracy: 67%
+      <div class="rbody">zero-shot accuracy: 17%
 few-shot  accuracy: 100%</div>
     </div>
-    <p>On this set, few-shot fixes the two cases zero-shot fumbled — the borderline "upgrade + bill"
-      (correctly <code>billing</code>) and the formatting that broke parsing. The improvement is real and
-      measurable, and now you can <em>prove</em> a prompt change helped instead of hoping.</p>
+    <p>Few-shot nails all six; zero-shot collapses to <strong>17%</strong> — its unparseable prose
+      ("This looks like a billing issue.", "Bug.") normalizes to <code>other</code> for almost everything,
+      so it only "gets" the one genuinely-<code>other</code> case. The gap is real and measurable, and now
+      you can <em>prove</em> a prompt change helped instead of hoping.</p>
     <div class="callout warn"><div class="ct">⚠ Don't over-trust a 6-row eval</div>
       <p>Six examples can't tell you the difference between 95% and 99% accuracy, and a lucky run can read
       as "100%". This is a smoke test, not a benchmark. Lesson 9 builds a proper eval set, handles
@@ -412,7 +413,7 @@ few-shot  accuracy: 100%</div>
       <thead><tr><th></th><th>Input tokens / call</th><th>Input cost / day (50k calls)</th></tr></thead>
       <tbody>
         <tr><td>Zero-shot</td><td>~15</td><td>~$0.075</td></tr>
-        <tr><td>Few-shot (6 examples)</td><td>~135</td><td>~$0.68</td></tr>
+        <tr><td>Few-shot (6 examples)</td><td>~145</td><td>~$0.73</td></tr>
       </tbody>
     </table>
     <p>Pennies here — but the <em>shape</em> matters: the cost is the example prefix × call volume, and it

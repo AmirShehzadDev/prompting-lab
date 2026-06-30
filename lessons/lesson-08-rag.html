@@ -322,15 +322,19 @@ def answer(query, k=3):
 print(answer("My Nimbus app says 'sync paused' and won't resume. What do I do?"))</script>
     </figure>
     <div class="response good"><div class="rhead">representative output &mdash; grounded, with a citation</div>
-      <div class="rbody">Sorry about the paused sync! To resume it, open the Nimbus icon in your system
-tray (Windows) or menu bar (macOS), click the Activity tab, and choose
-"Resume sync". Note that sync auto-pauses on metered or VPN connections unless
-you allow it in Settings > Network. If it stays stuck, check Settings > Account
-for a "storage full" banner. [sync-errors#0]</div>
+      <div class="rbody">I can help with that! If your Nimbus app says "Sync paused" and won't resume,
+here's what to do:
+1. Open the Nimbus icon in your system tray (Windows) or menu bar (macOS).
+2. Go to the Activity tab.
+3. Click Resume sync.
+Sync can also auto-pause on metered or VPN connections unless you've allowed it in
+Settings > Network. If it's still stalled, check Settings > Account for a
+"storage full" banner. [sync-errors#1, sync-errors#2]</div>
     </div>
-    <p>Compare that to Lesson 1, where the model invented "Resume syncing" from the system tray. Now it
-      gives the <em>real</em> path (Activity tab &rarr; Resume sync) because it read the actual article &mdash;
-      and it cited <code>[sync-errors#0]</code> so you can verify. That is the whole point of RAG.</p>
+    <p>Compare that to Lesson 1, where the model hallucinated a "Nimbus Note status page" and guessed at
+      menu items. Now it gives the <em>real</em> path (Activity tab &rarr; Resume sync) because it read the
+      actual article &mdash; and it cited <code>[sync-errors#1, sync-errors#2]</code> so you can verify.
+      That is the whole point of RAG.</p>
   </section>
 
   <!-- 5 IDK -->
@@ -339,9 +343,8 @@ for a "storage full" banner. [sync-errors#0]</div>
     <p class="sub">Grounding doesn't just improve right answers &mdash; it lets the model correctly refuse
       when the KB has nothing.</p>
     <div class="response"><div class="rhead"><code>answer("Does Nimbus have an app for smartwatches?")</code></div>
-      <div class="rbody">I don't have information about smartwatch support in our help center, so I don't
-want to guess. I can escalate this to a human who can confirm &mdash; would you
-like me to do that?</div>
+      <div class="rbody">I don't have information about Nimbus having an app for smartwatches. I can help
+with questions about syncing, sharing, storage, plans, and billing.</div>
     </div>
     <p>Nothing in the KB matches, so the retrieved passages are off-topic, and the grounding rule kicks in:
       it declines instead of fabricating a confident answer. An honest "I don't know" is a feature, not a
@@ -430,6 +433,18 @@ def rag(question: str) -> str:
 if __name__ == "__main__":
     print(rag("My Nimbus app says 'sync paused' and won't resume. What do I do?"))</script>
     </figure>
+    <div class="response good"><div class="rhead">actual output</div>
+      <div class="rbody">If your Nimbus app says "Sync paused" and won't resume, first open the Nimbus
+icon in your system tray (Windows) or menu bar (macOS), click the Activity tab,
+and choose "Resume sync" [sync-errors#1].
+
+If it still won't resume, check Settings > Network to ensure sync is allowed on
+metered or VPN connections [sync-errors#1]. Also check Settings > Account for a
+"storage full" banner; if your quota is exceeded, sync halts [sync-errors#2].
+
+If none of these resolve it, I don't have enough information to help further.
+Would you like me to escalate this to a support agent?</div>
+    </div>
     <table>
       <thead><tr><th>Concern</th><th>Raw SDK</th><th>LangChain</th></tr></thead>
       <tbody>

@@ -14,7 +14,7 @@ class Judgment(BaseModel):
     reason: str
 
 
-judge = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0).with_structured_output(Judgment)
+judge = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, thinking_budget=0).with_structured_output(Judgment)
 
 
 def evaluate_reply(question: str, reply: str) -> Judgment:

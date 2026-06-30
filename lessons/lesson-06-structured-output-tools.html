@@ -262,8 +262,8 @@ print(type(t).__name__, "->", t.intent, t.severity, t.needs_human)
 print(t.summary)</script>
     </figure>
     <div class="response good"><div class="rhead">representative output</div>
-      <div class="rbody">Ticket -> billing urgent True
-Customer was double-charged $10 this month and is upset about the lack of response.</div>
+      <div class="rbody">Ticket -> billing high True
+Customer was charged twice this month and is not receiving help.</div>
     </div>
     <p><code>t</code> is a real <code>Ticket</code> instance: <code>t.severity</code> is guaranteed to be
       one of the four allowed values, <code>t.needs_human</code> is a genuine <code>bool</code>. No regex,
