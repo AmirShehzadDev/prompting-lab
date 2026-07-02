@@ -11,7 +11,7 @@ from langchain_core.output_parsers import StrOutputParser
 from reasoning import NIMBUS_FACTS, QUESTION, parse_final   # reuse facts + the parser
 
 # temperature > 0 so repeated runs differ (required for self-consistency)
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.8, max_output_tokens=400, thinking_budget=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.8, max_output_tokens=400)
 
 prompt = ChatPromptTemplate.from_messages([
     ("human", "{facts}\n\n{question}\n\nThink step by step, then end with a line "

@@ -29,7 +29,7 @@ def get_recent_orders(email: str) -> dict:
 
 
 agent = create_agent(
-    model=ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3, thinking_budget=0),
+    model=ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3),
     tools=[get_subscription, get_recent_orders],
     system_prompt=NIMBUS_SYSTEM,
 )

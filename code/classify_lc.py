@@ -32,8 +32,7 @@ final_prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0, max_output_tokens=8,
-                             thinking_budget=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0, max_output_tokens=8)
 chain = final_prompt | llm | StrOutputParser()      # prompt -> model -> plain string
 
 

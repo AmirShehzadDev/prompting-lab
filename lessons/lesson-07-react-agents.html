@@ -298,18 +298,17 @@ if __name__ == "__main__":
     </figure>
     <div class="response good"><div class="rhead">representative run</div>
       <div class="rbody">  step 1: get_recent_orders({'email': 'alice@example.com'})
-  step 2: get_subscription({'email': 'alice@example.com'})
+  step 1: get_subscription({'email': 'alice@example.com'})
 
-[3 steps, 1840 tokens]
-Yes — I see two $10 charges dated 2026-06-01 (the second flagged as a duplicate),
-so you were double-charged. You're currently on the Plus plan, renewing 2026-07-15.
-I can't reverse the charge myself, but I'll escalate the duplicate to a human
-billing agent. If you'd like to avoid Plus charges going forward, I can explain how
-to downgrade to Free — just say the word.</div>
+[2 steps, 1369 tokens]
+It looks like you were double-charged on 2026-06-01 for your Plus monthly plan.
+I've also confirmed that you are currently on the Plus plan. To resolve the double
+charge, please contact our billing support, and we'll be happy to assist you with
+a refund.</div>
     </div>
-    <p>The model decided, on its own, to call <em>two</em> tools across two steps, then answered on the
-      third — using real data, in the Nimbus voice. We never told it the order; it reasoned its way there.
-      That is the agent.</p>
+    <p>The model decided, on its own, to call <em>both</em> tools in a single step (a parallel tool call,
+      hence two <code>step 1</code> lines), then answered on the next — finishing in 2 steps, using real
+      data. We never told it which tools or what order; it reasoned its way there. That is the agent.</p>
   </section>
 
   <!-- 4 GUARDS -->

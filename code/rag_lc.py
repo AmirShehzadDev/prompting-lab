@@ -27,7 +27,7 @@ prompt = ChatPromptTemplate.from_messages([
                "If the answer isn't in the context, say you don't know and offer to escalate."),
     ("human", "Context:\n{context}\n\nQuestion: {question}"),
 ])
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2, thinking_budget=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
 
 
 def format_docs(ds):

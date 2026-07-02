@@ -411,7 +411,7 @@ if __name__ == "__main__":
     return llm.generate(
         prompt,
         temperature=0,
-        max_output_tokens=200,
+        max_output_tokens=1500,   # must exceed the thinking budget + the answer, or FINAL gets cut off
         # Let the model think internally. budget = token allowance for hidden
         # reasoning; 0 disables, -1 lets the model decide dynamically.
         thinking_config=types.ThinkingConfig(thinking_budget=budget),

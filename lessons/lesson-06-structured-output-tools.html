@@ -355,10 +355,9 @@ resp = client.models.generate_content(
 print(resp.text)                            # final answer, grounded in real data</script>
     </figure>
     <div class="response good"><div class="rhead">representative output</div>
-      <div class="rbody">Yes — I can see two charges on your account dated 2026-06-01, both for $10.00
-(order NB-1001 and NB-1002, the second labelled a duplicate). I can't process
-refunds myself, but I'll escalate this duplicate charge to a human billing
-agent to get it reversed. Anything else I can check?</div>
+      <div class="rbody">Yes, it looks like you were charged twice on June 1st for your Plus monthly plan.
+One of these charges appears to be a duplicate. I can escalate this to a human
+agent who can help you with a refund. Would you like me to do that?</div>
     </div>
     <p>The model recognized it needed order data, called <code>get_recent_orders("alice@example.com")</code>,
       saw the two charges, and answered with <em>real facts</em> — in the Nimbus voice, still refusing to
@@ -408,9 +407,7 @@ print(final.text)</script>
     </figure>
     <div class="response"><div class="rhead">representative output</div>
       <div class="rbody">model wants: get_subscription {'email': 'carol@example.com'}
-Carol's Pro plan is currently marked "past_due" (it was due to renew 2026-06-20),
-so the account isn't in good standing right now. Updating the payment method should
-restore it — want me to walk you through that or escalate to billing?</div>
+Carol Singh's account is past due.</div>
     </div>
     <p>Three explicit steps: the model <strong>requests</strong> a call, <strong>you</strong> run it (the
       control point where you'd validate args or require approval), and the model <strong>uses</strong> the
@@ -499,6 +496,15 @@ llm_tools = llm.bind_tools([get_recent_orders])
 ai = llm_tools.invoke("Was alice@example.com charged twice this month?")
 print(ai.tool_calls)   # the requested call(s) — you execute them yourself</script>
     </figure>
+    <div class="response good"><div class="rhead">actual output</div>
+      <div class="rbody">ticket: billing high True
+tool calls: []</div>
+    </div>
+    <p>The structured ticket works just like the raw version. But notice <code>tool calls: []</code> — for
+      that bare prompt the model chose to <em>answer directly</em> instead of calling the tool.
+      <code>bind_tools</code> makes tools <em>available</em>; it doesn't force their use. Reliable tool-calling
+      usually needs a system-prompt nudge or an agent loop that expects it (Lesson 7) — an honest reminder
+      that "the model <em>can</em> call a tool" and "the model <em>will</em>" are different things.</p>
     <table>
       <thead><tr><th>Concern</th><th>Raw SDK</th><th>LangChain</th></tr></thead>
       <tbody>

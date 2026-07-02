@@ -17,7 +17,7 @@ count against your quota. (1 TB = 1024 GB.)"""
 
 QUESTION = (
     "It's late June. My own Nimbus files total 1,600 GB. I'm also a member of a "
-    "1590 GB team folder that my colleague owns. I want the cheapest plan that fits, "
+    "600 GB team folder that my colleague owns. I want the cheapest plan that fits, "
     "billed monthly for the 6 remaining months (July-December). "
     "Which plan do I need, and what's my total cost through December?"
 )
@@ -71,7 +71,7 @@ def answer_thinking(budget: int = 1024) -> str:
     prompt = (f"{NIMBUS_FACTS}\n\n{QUESTION}\n\n"
               "Reply with ONLY: FINAL: plan=<name>, total=$<amount>")
     return llm.generate(
-        prompt, temperature=0, max_output_tokens=200,
+        prompt, temperature=0, max_output_tokens=1500,  # must exceed thinking budget + the answer
         # budget = token allowance for hidden reasoning; 0 disables, -1 = dynamic.
         thinking_config=types.ThinkingConfig(thinking_budget=budget),
     )
@@ -87,8 +87,8 @@ def parse_final(text: str):
 
 if __name__ == "__main__":
     print("direct      :", parse_final(answer_direct()))
-    # print("zero-shot CoT:", parse_final(answer_cot()))
-    # print("few-shot CoT :", parse_final(answer_fewshot_cot()))
-    # print("thinking     :", parse_final(answer_thinking()))
-    # print("---")
-    # print(llm.usage.report())
+    print("zero-shot CoT:", parse_final(answer_cot()))
+    print("few-shot CoT :", parse_final(answer_fewshot_cot()))
+    print("thinking     :", parse_final(answer_thinking()))
+    print("---")
+    print(llm.usage.report())

@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 from system_prompt import NIMBUS_SYSTEM
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3, max_output_tokens=300, thinking_budget=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3, max_output_tokens=300)
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", NIMBUS_SYSTEM),       # our system text has no literal { }, so templating is safe
